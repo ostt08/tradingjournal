@@ -1,2 +1,2 @@
-# tradingjournal
-Master's Program Portfolio 1
+# Trading OS — Algorithmic Trading Journal & Analytics Platform
+#Personal project documenting the iterative development of a live forex and equities trading system — integrating OANDA, Alpaca, and Google Sheets via Apps Script for real-time P&L tracking, signal logging, and performance analytics. Demonstrates applied data engineering, API integration, and financial analytics outside of enterprise environments.
