@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading OS — Full Platform</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--surface:#111118;--card:#16161f;--border:#22222e;--accent:#e8ff47;--accent2:#47b4ff;--green:#3dffa0;--red:#ff4f6d;--yellow:#ffb830;--purple:#b47fff;--text:#e8e8f0;--muted:#555568;--fd:'Syne',sans-serif;--fm:'JetBrains Mono',monospace;--fb:'Inter',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);min-height:100vh}
+.shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:24px 0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:0 20px 24px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.logo-mark{font-family:var(--fd);font-size:1.3rem;font-weight:800;color:var(--accent);letter-spacing:-1px}
+.logo-sub{font-family:var(--fm);font-size:.5rem;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:3px}
+.nav-section{padding:0 12px;margin-bottom:4px}
+.nav-label{font-size:.55rem;font-family:var(--fm);color:var(--muted);letter-spacing:3px;text-transform:uppercase;padding:0 8px;margin-bottom:4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:.8rem;color:var(--muted);transition:all .15s;border:1px solid transparent;margin-bottom:2px}
+.nav-item:hover{background:rgba(232,255,71,.04);color:var(--text)}
+.nav-item.active{background:rgba(232,255,71,.08);color:var(--accent);border-color:rgba(232,255,71,.15)}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:.6rem;padding:1px 5px;border-radius:10px;font-family:var(--fm)}
+.sidebar-footer{margin-top:auto;padding:16px 20px;border-top:1px solid var(--border)}
+.phase-pill{font-family:var(--fm);font-size:.56rem;color:var(--accent);background:rgba(232,255,71,.08);border:1px solid rgba(232,255,71,.2);border-radius:20px;padding:4px 10px;text-transform:uppercase;letter-spacing:1px;display:inline-block;margin-bottom:8px}
+.phase-trades{font-size:.68rem;color:var(--muted);font-family:var(--fm)}
+
+/* MAIN */
+.main{padding:32px;overflow-y:auto;max-height:100vh}
+.pane{display:none}.pane.active{display:block}
+
+/* SECTION HEADERS */
+.sh{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px}
+.sh-title{font-family:var(--fd);font-size:1.4rem;font-weight:700}
+.sh-sub{font-family:var(--fm);font-size:.6rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px}
+.card-label{font-family:var(--fm);font-size:.6rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+/* METRICS */
+.metric-big{font-family:var(--fd);font-size:2rem;font-weight:800;color:var(--accent);line-height:1}
+.metric-val{font-family:var(--fd);font-size:1.4rem;font-weight:700;line-height:1}
+.metric-label{font-size:.72rem;color:var(--muted);margin-top:4px}
+.metric-note{font-size:.65rem;color:var(--muted);font-family:var(--fm);margin-top:4px}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:.8rem;cursor:pointer;transition:all .15s;font-family:var(--fb)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn-accent{background:var(--accent);color:#0a0a0f;border-color:var(--accent);font-weight:600}
+.btn-accent:hover{background:#d4e83f;color:#0a0a0f}
+.btn-green{border-color:var(--green);color:var(--green)}
+.btn-green:hover{background:rgba(61,255,160,.08)}
+.btn-red{border-color:var(--red);color:var(--red)}
+.btn-red:hover{background:rgba(255,79,109,.08)}
+.btn-yellow{border-color:var(--yellow);color:var(--yellow)}
+.btn-yellow:hover{background:rgba(255,184,48,.08)}
+.btn-sm{padding:5px 10px;font-size:.72rem}
+.btn-xs{padding:3px 8px;font-size:.65rem}
+
+/* FORMS */
+input[type=text],input[type=number],input[type=date],select,textarea{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-family:var(--fb);font-size:.8rem;width:100%;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:rgba(232,255,71,.4)}
+label{font-size:.65rem;color:var(--muted);font-family:var(--fm);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
+.field{margin-bottom:12px}
+input[type=range]{width:100%;accent-color:var(--accent);padding:0;cursor:pointer}
+select option{background:var(--card)}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+th{font-family:var(--fm);font-size:.58rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:left;padding:8px 10px;border-bottom:1px solid var(--border)}
+td{padding:9px 10px;font-size:.78rem;border-bottom:1px solid rgba(34,34,46,.4)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(232,255,71,.02)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-family:var(--fm);font-size:.6rem;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.b-win{background:rgba(61,255,160,.1);color:var(--green);border:1px solid rgba(61,255,160,.2)}
+.b-loss{background:rgba(255,79,109,.1);color:var(--red);border:1px solid rgba(255,79,109,.2)}
+.b-open{background:rgba(71,180,255,.1);color:var(--accent2);border:1px solid rgba(71,180,255,.2)}
+.b-skip{background:rgba(85,85,104,.1);color:var(--muted);border:1px solid var(--border)}
+.b-pend{background:rgba(255,184,48,.1);color:var(--yellow);border:1px solid rgba(255,184,48,.2)}
+.b-long{background:rgba(61,255,160,.06);color:var(--green);border:1px solid rgba(61,255,160,.15)}
+.b-short{background:rgba(255,79,109,.06);color:var(--red);border:1px solid rgba(255,79,109,.15)}
+
+/* DIVIDER */
+.div{height:1px;background:var(--border);margin:20px 0}
+
+/* SLIDER GROUP */
+.slider-group{margin-bottom:20px}
+.slider-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.slider-label{font-family:var(--fm);font-size:.65rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.slider-val{font-family:var(--fm);font-size:.9rem;color:var(--accent)}
+
+/* LOCATION TABS */
+.loc-tabs{display:flex;gap:4px;margin-bottom:20px}
+.loc-tab{flex:1;padding:8px;text-align:center;cursor:pointer;border:1px solid var(--border);border-radius:6px;font-size:.78rem;color:var(--muted);transition:all .15s}
+.loc-tab:hover{border-color:rgba(232,255,71,.3);color:var(--text)}
+.loc-tab.active{border-color:var(--accent);color:var(--accent);background:rgba(232,255,71,.06)}
+
+/* COST TABLE */
+.cost-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(34,34,46,.4);font-size:.8rem}
+.cost-row:last-child{border-bottom:none}
+.cost-name{color:var(--muted)}
+.cost-val{font-family:var(--fm);color:var(--text)}
+.cost-row.total{padding-top:12px;margin-top:4px}
+.cost-row.total .cost-name{color:var(--text);font-weight:500}
+.cost-row.total .cost-val{color:var(--accent)}
+
+/* AGENT CARDS */
+.agent-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;border-left:3px solid var(--border);transition:border-color .2s}
+.agent-card.bullish{border-left-color:var(--green)}
+.agent-card.bearish{border-left-color:var(--red)}
+.agent-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.agent-pair{font-family:var(--fd);font-size:1rem;font-weight:700}
+.agent-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.agent-stat-label{font-family:var(--fm);font-size:.55rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.agent-stat-val{font-family:var(--fm);font-size:.82rem;color:var(--text);margin-top:2px}
+.agent-reason{font-size:.76rem;color:var(--muted);line-height:1.6;padding:10px;background:var(--surface);border-radius:6px;margin-bottom:10px}
+.agent-actions{display:flex;gap:8px}
+
+/* SENTIMENT */
+.heat-container{text-align:center;padding:20px 0}
+.heat-score-big{font-family:var(--fd);font-size:4rem;font-weight:800;line-height:1;margin-bottom:4px;transition:color .4s}
+.heat-label{font-family:var(--fm);font-size:.72rem;letter-spacing:3px;text-transform:uppercase;margin-bottom:20px}
+.heat-bar-track{position:relative;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--red) 0%,var(--yellow) 50%,var(--green) 100%);margin:0 20px 8px}
+.heat-needle{position:absolute;top:-5px;width:4px;height:18px;background:white;border-radius:2px;transform:translateX(-50%);transition:left .6s cubic-bezier(.34,1.56,.64,1)}
+.heat-ends{display:flex;justify-content:space-between;font-family:var(--fm);font-size:.6rem;color:var(--muted);margin:0 20px}
+.driver-row{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid rgba(34,34,46,.4);font-size:.78rem}
+.driver-row:last-child{border-bottom:none}
+.driver-icon{flex-shrink:0;margin-top:1px}
+.driver-text{color:var(--muted);line-height:1.5}
+.driver-text strong{color:var(--text);font-weight:500}
+
+/* LAB */
+.algo-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
+.algo-tab{padding:5px 12px;border-radius:5px;border:1px solid var(--border);cursor:pointer;font-size:.72rem;color:var(--muted);background:transparent;transition:all .15s;font-family:var(--fm)}
+.algo-tab:hover{border-color:rgba(232,255,71,.3);color:var(--text)}
+.algo-tab.active{border-color:var(--accent);color:var(--accent);background:rgba(232,255,71,.05)}
+.code-block{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:var(--fm);font-size:.7rem;color:#b4b4d4;line-height:1.7;overflow-x:auto;white-space:pre}
+.k{color:var(--accent)}.s{color:var(--green)}.c{color:var(--muted)}.f{color:var(--accent2)}.n{color:var(--purple)}
+
+.int-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:10px}
+.int-header{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.int-name{font-weight:500;font-size:.88rem}
+.int-tag{margin-left:auto;font-family:var(--fm);font-size:.6rem;padding:2px 8px;border-radius:4px}
+.int-steps{font-size:.76rem;color:var(--muted);line-height:1.8}
+.int-steps strong{color:var(--text);font-weight:500}
+
+/* LOADING SPINNER */
+.loading{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;color:var(--muted)}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TIMELINE */
+.tl{position:relative;padding-left:20px}
+.tl::before{content:'';position:absolute;left:6px;top:4px;bottom:4px;width:1px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:20px}
+.tl-dot{position:absolute;left:-17px;top:3px;width:8px;height:8px;border-radius:50%;border:2px solid var(--bg)}
+.done .tl-dot{background:var(--green)}
+.current .tl-dot{background:var(--accent);box-shadow:0 0 6px rgba(232,255,71,.5)}
+.future .tl-dot{background:var(--muted)}
+.tl-time{font-family:var(--fm);font-size:.58rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.tl-title{font-weight:500;font-size:.85rem;margin:2px 0}
+.tl-desc{font-size:.74rem;color:var(--muted);line-height:1.5}
+
+/* UTIL */
+.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}.mb24{margin-bottom:24px}
+.mt12{margin-top:12px}.mt16{margin-top:16px}.mt24{margin-top:24px}
+.flex{display:flex}.flex-b{display:flex;justify-content:space-between;align-items:center}
+.gap8{gap:8px}.gap12{gap:12px}
+.muted{color:var(--muted)}.mono{font-family:var(--fm)}
+.green{color:var(--green)}.red{color:var(--red)}.yellow{color:var(--yellow)}.accent{color:var(--accent)}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:.82rem}
+.empty-state .empty-icon{font-size:2rem;margin-bottom:12px;opacity:.4}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">TOS</div>
+    <div class="logo-sub">Trading Operating System</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Core</div>
+    <div class="nav-item active" id="nav-money" onclick="showPane('money')">💰 Money Model</div>
+    <div class="nav-item" id="nav-journal" onclick="showPane('journal')">📓 Journal</div>
+  </div>
+  <div class="nav-section mt12">
+    <div class="nav-label">Intelligence</div>
+    <div class="nav-item" id="nav-agents" onclick="showPane('agents')">
+      🤖 Agents <span class="nav-badge" id="agent-count" style="display:none">0</span>
+    </div>
+    <div class="nav-item" id="nav-sentiment" onclick="showPane('sentiment')">🔥 Sentiment</div>
+  </div>
+  <div class="nav-section mt12">
+    <div class="nav-label">Advanced</div>
+    <div class="nav-item" id="nav-lab" onclick="showPane('lab')">🧪 Lab</div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="phase-pill" id="phase-pill">PHASE 1 — PAPER</div>
+    <div class="phase-trades muted mono" id="phase-progress">0 / 50 trades logged</div>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+<!-- ═══════════════════════════════════════ MONEY MODEL ═══ -->
+<div class="pane active" id="pane-money">
+  <div class="sh">
+    <div><div class="sh-sub">Financial Reality Check</div><div class="sh-title">Money Model</div></div>
+  </div>
+
+  <div class="g2 mb20">
+    <!-- LEFT: Location + sliders -->
+    <div>
+      <div class="card-label">Where are you living?</div>
+      <div class="loc-tabs mb20">
+        <div class="loc-tab active" id="lt-latam" onclick="setLocation('latam')">🌎 LATAM</div>
+        <div class="loc-tab" id="lt-bcn" onclick="setLocation('bcn')">🇪🇸 Barcelona</div>
+        <div class="loc-tab" id="lt-usa" onclick="setLocation('usa')">🇺🇸 USA</div>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">Target monthly net income</span>
+          <span class="slider-val" id="s-income-val">$1,500</span>
+        </div>
+        <input type="range" min="500" max="10000" step="100" value="1500" id="s-income" oninput="updateMoney()">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">Expected monthly return %</span>
+          <span class="slider-val" id="s-return-val">3%</span>
+        </div>
+        <input type="range" min="1" max="8" step="0.5" value="3" id="s-return" oninput="updateMoney()">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">Monthly capital injection ($)</span>
+          <span class="slider-val" id="s-inject-val">$500</span>
+        </div>
+        <input type="range" min="0" max="5000" step="100" value="500" id="s-inject" oninput="updateMoney()">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <span class="slider-label">Starting capital</span>
+          <span class="slider-val" id="s-start-val">$5,000</span>
+        </div>
+        <input type="range" min="1000" max="100000" step="1000" value="5000" id="s-start" oninput="updateMoney()">
+      </div>
+    </div>
+
+    <!-- RIGHT: Required account + cost breakdown -->
+    <div>
+      <div class="card mb16" style="text-align:center;padding:24px">
+        <div class="card-label">Required account size</div>
+        <div class="metric-big" id="m-account">$77,767</div>
+        <div class="metric-note" id="m-account-note">at 3% monthly return, 25% tax reserve</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label mb8">Cost breakdown — <span id="loc-name">LATAM</span></div>
+        <div id="cost-breakdown"><!-- populated by JS --></div>
+        <div class="div" style="margin:12px 0"></div>
+        <div class="g2 gap8">
+          <div>
+            <div class="metric-val green" id="m-gross">$2,333</div>
+            <div class="metric-label">Gross target/mo</div>
+          </div>
+          <div>
+            <div class="metric-val yellow" id="m-pretax">$1,750</div>
+            <div class="metric-label">After tax target/mo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline chart -->
+  <div class="card mb20">
+    <div class="flex-b mb12">
+      <div class="card-label">10-year compounding projection</div>
+      <div class="mono muted" style="font-size:.62rem">Conservative 2% · Base 3.5% · Optimistic 5%</div>
+    </div>
+    <div style="position:relative;height:220px">
+      <canvas id="timeline-chart"></canvas>
+    </div>
+    <div style="font-size:.68rem;color:var(--muted);margin-top:8px;font-family:var(--fm)">
+      Dashed lines = required account for <span class="accent">LATAM</span> / <span style="color:var(--accent2)">BCN</span> / <span style="color:var(--yellow)">USA</span> at current target income.
+    </div>
+  </div>
+
+  <!-- Milestone timeline -->
+  <div class="g2 gap12">
+    <div class="card">
+      <div class="card-label mb12">Your roadmap to $5K + $5K reinvest</div>
+      <div class="tl" id="money-timeline"><!-- populated by JS --></div>
+    </div>
+    <div class="card">
+      <div class="card-label mb12">Sharpening your goal</div>
+      <div style="font-size:.78rem;color:var(--muted);line-height:1.8" id="recommendations">
+        <!-- populated by JS -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ JOURNAL ═══ -->
+<div class="pane" id="pane-journal">
+  <div class="sh">
+    <div><div class="sh-sub">Paper + Live Log</div><div class="sh-title">Trade Journal</div></div>
+    <button class="btn btn-accent btn-sm" onclick="exportCSV()">↓ Export CSV</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="g4 mb20">
+    <div class="card"><div class="card-label">Total trades</div><div class="metric-val accent" id="k-total">0</div></div>
+    <div class="card"><div class="card-label">Win rate</div><div class="metric-val" id="k-wr">—</div></div>
+    <div class="card"><div class="card-label">Avg R:R</div><div class="metric-val" id="k-rr">—</div></div>
+    <div class="card"><div class="card-label">Expectancy</div><div class="metric-val" id="k-exp">—</div></div>
+  </div>
+
+  <!-- Trade form -->
+  <div class="card mb16">
+    <div class="card-label mb12">Log new trade</div>
+    <div class="g3 gap8">
+      <div class="field"><label>Date</label><input type="date" id="f-date"></div>
+      <div class="field"><label>Pair</label><input type="text" id="f-pair" placeholder="EUR/USD"></div>
+      <div class="field"><label>Direction</label>
+        <select id="f-dir"><option>LONG</option><option>SHORT</option></select>
+      </div>
+    </div>
+    <div class="g4 gap8">
+      <div class="field"><label>Entry</label><input type="number" id="f-entry" step="0.00001" placeholder="1.08540"></div>
+      <div class="field"><label>Stop Loss</label><input type="number" id="f-sl" step="0.00001" placeholder="1.08200"></div>
+      <div class="field"><label>Take Profit</label><input type="number" id="f-tp" step="0.00001" placeholder="1.09220"></div>
+      <div class="field"><label>Result</label>
+        <select id="f-result"><option>WIN</option><option>LOSS</option><option>OPEN</option><option>SKIP</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Notes</label><input type="text" id="f-notes" placeholder="EMA cross confirmed, RSI 52, volume spike on entry candle"></div>
+    <div class="flex gap8" style="align-items:center">
+      <button class="btn btn-accent" onclick="addTrade()">+ Log trade</button>
+      <span id="rr-preview" style="font-family:var(--fm);font-size:.75rem;color:var(--muted)"></span>
+    </div>
+  </div>
+
+  <!-- Equity chart -->
+  <div class="card mb16">
+    <div class="card-label mb8">Equity curve (closed trades)</div>
+    <div style="position:relative;height:120px"><canvas id="equity-chart"></canvas></div>
+  </div>
+
+  <!-- Trade table -->
+  <div class="card" style="overflow-x:auto">
+    <div id="trades-table">
+      <div class="empty-state"><div class="empty-icon">📓</div>No trades logged yet. Your first paper trade goes here.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ AGENTS ═══ -->
+<div class="pane" id="pane-agents">
+  <div class="sh">
+    <div><div class="sh-sub">Human-in-the-loop · Paper trades only</div><div class="sh-title">AI Agents</div></div>
+  </div>
+
+  <!-- Status bar -->
+  <div class="card mb16">
+    <div class="flex-b">
+      <div>
+        <div class="card-label mb8">Agent status</div>
+        <div class="g3 gap12">
+          <div>
+            <div style="font-size:.7rem;color:var(--muted)">Watching pairs</div>
+            <div style="font-family:var(--fm);font-size:.8rem;color:var(--text);margin-top:2px">EUR/USD · GBP/USD · BTC/USD</div>
+          </div>
+          <div>
+            <div style="font-size:.7rem;color:var(--muted)">Mode</div>
+            <div style="font-family:var(--fm);font-size:.8rem;color:var(--green);margin-top:2px">📄 PAPER ONLY</div>
+          </div>
+          <div>
+            <div style="font-size:.7rem;color:var(--muted)">Signals generated</div>
+            <div class="mono" style="font-size:.8rem;margin-top:2px" id="signals-count">0 total</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-accent" onclick="generateSignals()" id="gen-btn">⚡ Generate Signals</button>
+    </div>
+  </div>
+
+  <!-- HITL Notice -->
+  <div style="background:rgba(255,184,48,.05);border:1px solid rgba(255,184,48,.2);border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:.76rem;color:var(--yellow)">
+    ⚠️ <strong>Human-in-the-loop active.</strong> Every paper trade requires your approval before execution. Real money trading will require a separate confirmation layer. Agents run analysis only — you decide.
+  </div>
+
+  <!-- Pending queue -->
+  <div class="sh" style="margin-bottom:12px">
+    <div style="font-family:var(--fm);font-size:.65rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Pending Approval</div>
+    <div id="pending-count" style="font-family:var(--fm);font-size:.7rem;color:var(--muted)">0 signals waiting</div>
+  </div>
+  <div id="pending-queue">
+    <div class="empty-state"><div class="empty-icon">🤖</div>Click "Generate Signals" to have Claude analyze markets and propose paper trades.<br>You approve or reject each one.</div>
+  </div>
+
+  <!-- Executed paper trades -->
+  <div class="div"></div>
+  <div class="sh" style="margin-bottom:12px">
+    <div style="font-family:var(--fm);font-size:.65rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Executed Paper Trades</div>
+  </div>
+  <div id="executed-list">
+    <div class="empty-state"><div class="empty-icon">✓</div>Approved signals will appear here and be logged to your journal.</div>
+  </div>
+
+  <!-- N8N integration hint -->
+  <div class="div"></div>
+  <div class="int-card">
+    <div class="int-header">
+      <div style="font-size:1.1rem">⚙️</div>
+      <div class="int-name">Run while you sleep — N8N + VPS</div>
+      <div class="int-tag b-pend">SETUP GUIDE</div>
+    </div>
+    <div class="int-steps">
+      To run agents autonomously overnight: <br>
+      <strong>1.</strong> Set up N8N on a $5/mo VPS (Railway, Render, or DigitalOcean) <br>
+      <strong>2.</strong> Build workflow: Cron (every 4h) → Claude API (analyze) → Telegram bot → You approve/reject via Telegram <br>
+      <strong>3.</strong> Connect TradingView webhooks → N8N → Claude filter → Notification <br>
+      <strong>4.</strong> Approved trades auto-log to this journal via API or spreadsheet <br>
+      → See Lab tab for full N8N workflow template
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ SENTIMENT ═══ -->
+<div class="pane" id="pane-sentiment">
+  <div class="sh">
+    <div><div class="sh-sub">News · Keywords · Heat Score</div><div class="sh-title">Sentiment Scanner</div></div>
+  </div>
+
+  <div class="g2 gap12 mb20">
+    <!-- Input -->
+    <div class="card">
+      <div class="card-label mb12">Analyze market sentiment</div>
+      <div class="field">
+        <label>Asset / pair / keyword</label>
+        <input type="text" id="sent-asset" placeholder="EUR/USD, Bitcoin, DXY, Fed rates...">
+      </div>
+      <div class="field">
+        <label>Paste headlines or describe context (optional)</label>
+        <textarea id="sent-context" rows="5" style="resize:vertical" placeholder="Paste recent news headlines, tweets, or describe what you're seeing in the market. Claude will extract sentiment signals..."></textarea>
+      </div>
+      <button class="btn btn-accent" onclick="analyzeSentiment()" id="sent-btn" style="width:100%">🔥 Analyze Sentiment</button>
+    </div>
+
+    <!-- Heat output -->
+    <div class="card" id="sent-output">
+      <div class="card-label mb12">Heat score</div>
+      <div class="heat-container">
+        <div class="heat-score-big" id="heat-number" style="color:var(--muted)">—</div>
+        <div class="heat-label muted" id="heat-label">Awaiting analysis</div>
+        <div class="heat-bar-track">
+          <div class="heat-needle" id="heat-needle" style="left:50%"></div>
+        </div>
+        <div class="heat-ends"><span>Extreme Fear</span><span>Neutral</span><span>Extreme Greed</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Drivers + history -->
+  <div class="g2 gap12">
+    <div class="card">
+      <div class="card-label mb12">Key drivers</div>
+      <div id="sent-drivers">
+        <div class="muted" style="font-size:.78rem">Run an analysis to see bullish and bearish drivers.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label mb12">Analysis history</div>
+      <div id="sent-history">
+        <div class="muted" style="font-size:.78rem">Previous sentiment scans will appear here.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ LAB ═══ -->
+<div class="pane" id="pane-lab">
+  <div class="sh">
+    <div><div class="sh-sub">Algorithms · Integrations · Tools</div><div class="sh-title">The Lab</div></div>
+  </div>
+
+  <!-- Algo library -->
+  <div class="card mb20">
+    <div class="card-label mb12">Algorithm library</div>
+    <div class="algo-tabs" id="algo-tabs">
+      <button class="algo-tab active" onclick="showAlgo('ema')">EMA Cross</button>
+      <button class="algo-tab" onclick="showAlgo('rsi')">RSI Filter</button>
+      <button class="algo-tab" onclick="showAlgo('bb')">Bollinger (R)</button>
+      <button class="algo-tab" onclick="showAlgo('ml')">ML Signal</button>
+      <button class="algo-tab" onclick="showAlgo('macd')">MACD</button>
+      <button class="algo-tab" onclick="showAlgo('backtest')">Backtester</button>
+    </div>
+    <div id="algo-desc" style="font-size:.78rem;color:var(--muted);margin-bottom:10px;line-height:1.6"></div>
+    <div class="code-block" id="algo-code"></div>
+  </div>
+
+  <!-- Integrations -->
+  <div class="card-label mb12">Integrations & Automations</div>
+  <div class="g2 gap12">
+    <div>
+      <div class="int-card">
+        <div class="int-header">
+          <div style="font-size:1.1rem">🔗</div>
+          <div class="int-name">TradingView → Webhook</div>
+          <div class="int-tag b-win">PRIORITY 1</div>
+        </div>
+        <div class="int-steps">
+          <strong>Goal:</strong> Alert fires in TradingView → hits your system<br>
+          <strong>1.</strong> TradingView Pro ($15/mo) → Create alert on EMA cross<br>
+          <strong>2.</strong> Set webhook URL to your N8N instance<br>
+          <strong>3.</strong> Payload: <code style="color:var(--accent)">{"pair":"{{ticker}}","signal":"{{strategy.order.action}}"}</code><br>
+          <strong>4.</strong> N8N receives → Claude validates R:R → notifies you
+        </div>
+      </div>
+      <div class="int-card">
+        <div class="int-header">
+          <div style="font-size:1.1rem">⚙️</div>
+          <div class="int-name">N8N Automation</div>
+          <div class="int-tag b-win">PRIORITY 2</div>
+        </div>
+        <div class="int-steps">
+          <strong>Self-hosted on Railway (free tier):</strong><br>
+          <strong>Flow:</strong> TradingView Webhook → N8N → Claude API node (validate signal) → Telegram → You approve → Log to Google Sheet<br>
+          <strong>Install:</strong> <code style="color:var(--accent)">npm install n8n -g && n8n start</code><br>
+          <strong>Key nodes:</strong> Webhook · HTTP Request · Telegram · Google Sheets · Code node (JS)
+        </div>
+      </div>
+      <div class="int-card">
+        <div class="int-header">
+          <div style="font-size:1.1rem">📱</div>
+          <div class="int-name">Telegram Bot (approval layer)</div>
+          <div class="int-tag b-pend">RECOMMENDED</div>
+        </div>
+        <div class="int-steps">
+          <strong>This is your human-in-the-loop while sleeping:</strong><br>
+          Agent fires → Telegram sends signal card → You tap ✅ or ❌ from phone<br>
+          <strong>1.</strong> @BotFather → create bot → get token<br>
+          <strong>2.</strong> N8N Telegram node → send structured message<br>
+          <strong>3.</strong> Reply "YES" → triggers paper trade execution
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="int-card">
+        <div class="int-header">
+          <div style="font-size:1.1rem">📅</div>
+          <div class="int-name">Motion — Daily Planning</div>
+          <div class="int-tag" style="background:rgba(180,127,255,.1);color:var(--purple);border:1px solid rgba(180,127,255,.2)">PRODUCTIVITY</div>
+        </div>
+        <div class="int-steps">
+          <strong>Use Motion to:</strong><br>
+          • Block 07:00–07:30 daily: "Check agent signals + approve"<br>
+          • Block Sunday 19:00: "Weekly review — log performance"<br>
+          • Auto-schedule R/Python study blocks<br>
+          Connect: Motion calendar → webhook → N8N → reminder in Telegram
+        </div>
+      </div>
+      <div class="int-card">
+        <div class="int-header">
+          <div style="font-size:1.1rem">🐍</div>
+          <div class="int-name">Python Environment Setup</div>
+          <div class="int-tag b-open">WEEK 1</div>
+        </div>
+        <div class="int-steps">
+          <code style="color:var(--accent)">pip install pandas yfinance ta scikit-learn matplotlib streamlit</code><br><br>
+          <strong>Data:</strong> yfinance (free) or CCXT (crypto)<br>
+          <strong>Indicators:</strong> ta-lib or pandas-ta<br>
+          <strong>Dashboard:</strong> Streamlit → deploy free on streamlit.io<br>
+          <strong>Backtest:</strong> backtrader or bt library
+        </div>
+      </div>
+      <div class="int-card">
+        <div class="int-header">
+          <div style="font-size:1.1rem">📊</div>
+          <div class="int-name">R Environment Setup</div>
+          <div class="int-tag b-open">MONTH 2</div>
+        </div>
+        <div class="int-steps">
+          <code style="color:var(--accent)">install.packages(c("quantmod","TTR","PerformanceAnalytics","ggplot2"))</code><br><br>
+          <strong>quantmod:</strong> pull OHLCV + charting<br>
+          <strong>TTR:</strong> 50+ technical indicators<br>
+          <strong>PerformanceAnalytics:</strong> Sharpe, drawdown, returns<br>
+          <strong>Use R for:</strong> statistical edge validation, walk-forward analysis
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+// ──────────────────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────────────────
+let trades = JSON.parse(localStorage.getItem('tos_trades') || '[]');
+let pendingSignals = [];
+let executedPaper = JSON.parse(localStorage.getItem('tos_paper') || '[]');
+let sentHistory = JSON.parse(localStorage.getItem('tos_sent') || '[]');
+let totalSignals = parseInt(localStorage.getItem('tos_sigcount') || '0');
+let timelineChart = null, equityChart = null;
+
+const LOC = {
+  latam: {
+    name: 'LATAM (Medellin)',
+    items: [
+      ['Rent (1BR nice apartment)', 600],
+      ['Food & dining', 300],
+      ['Transport (Uber + metro)', 70],
+      ['Internet + coworking', 90],
+      ['Health insurance (SafetyWing)', 65],
+      ['Phone', 20],
+      ['Entertainment', 120],
+      ['Misc / buffer', 100],
+    ]
+  },
+  bcn: {
+    name: 'Barcelona, Spain',
+    items: [
+      ['Rent (1BR Gràcia/Eixample)', 1350],
+      ['Food & dining', 500],
+      ['Transport (T-Casual + Uber)', 100],
+      ['Internet', 40],
+      ['Health insurance (private)', 160],
+      ['Phone', 20],
+      ['Entertainment', 220],
+      ['Misc / buffer', 140],
+    ]
+  },
+  usa: {
+    name: 'USA (Austin, TX)',
+    items: [
+      ['Rent (1BR)', 1700],
+      ['Food & dining', 600],
+      ['Transport (car + gas + insurance)', 580],
+      ['Internet', 70],
+      ['Health insurance', 420],
+      ['Phone', 70],
+      ['Entertainment', 250],
+      ['Misc / buffer', 180],
+    ]
+  }
+};
+
+const TRADING_COSTS = [
+  ['Spread / commission (~20 trades)', 250],
+  ['Overnight swap fees', 80],
+  ['TradingView Pro', 17],
+  ['VPS / hosting', 20],
+];
+
+let currentLoc = 'latam';
+
+// ──────────────────────────────────────────────────────────
+// NAVIGATION
+// ──────────────────────────────────────────────────────────
+function showPane(id) {
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('pane-'+id).classList.add('active');
+  document.getElementById('nav-'+id).classList.add('active');
+  if(id === 'journal') { renderJournal(); renderEquityChart(); }
+  if(id === 'money') { updateMoney(); }
+}
+
+// ──────────────────────────────────────────────────────────
+// MONEY MODEL
+// ──────────────────────────────────────────────────────────
+function setLocation(loc) {
+  currentLoc = loc;
+  ['latam','bcn','usa'].forEach(l => {
+    document.getElementById('lt-'+l).classList.toggle('active', l===loc);
+  });
+  updateMoney();
+}
+
+function updateMoney() {
+  const income = parseInt(document.getElementById('s-income').value);
+  const ret = parseFloat(document.getElementById('s-return').value);
+  const inject = parseInt(document.getElementById('s-inject').value);
+  const start = parseInt(document.getElementById('s-start').value);
+  document.getElementById('s-income-val').textContent = '$'+income.toLocaleString();
+  document.getElementById('s-return-val').textContent = ret+'%';
+  document.getElementById('s-inject-val').textContent = '$'+inject.toLocaleString();
+  document.getElementById('s-start-val').textContent = '$'+start.toLocaleString();
+
+  const loc = LOC[currentLoc];
+  const living = loc.items.reduce((a,b)=>a+b[1],0);
+  const tradingOH = TRADING_COSTS.reduce((a,b)=>a+b[1],0);
+  const afterTaxNeeded = living + tradingOH;
+  const preTaxGross = afterTaxNeeded / 0.75;
+  const reqAccount = Math.round(preTaxGross / (ret/100));
+
+  document.getElementById('loc-name').textContent = loc.name;
+  document.getElementById('m-account').textContent = '$'+reqAccount.toLocaleString();
+  document.getElementById('m-account-note').textContent = `at ${ret}% monthly return, 25% tax reserve`;
+  document.getElementById('m-gross').textContent = '$'+Math.round(preTaxGross).toLocaleString();
+  document.getElementById('m-pretax').textContent = '$'+Math.round(afterTaxNeeded).toLocaleString();
+
+  // Cost breakdown
+  let html = '';
+  loc.items.forEach(([name, val]) => {
+    html += `<div class="cost-row"><span class="cost-name">${name}</span><span class="cost-val">$${val}</span></div>`;
+  });
+  html += '<div style="height:6px"></div>';
+  TRADING_COSTS.forEach(([name, val]) => {
+    html += `<div class="cost-row"><span class="cost-name" style="color:var(--yellow)">${name}</span><span class="cost-val" style="color:var(--yellow)">$${val}</span></div>`;
+  });
+  html += `<div class="cost-row total"><span class="cost-name">Total monthly needed (gross, pre-tax)</span><span class="cost-val">$${Math.round(preTaxGross).toLocaleString()}</span></div>`;
+  document.getElementById('cost-breakdown').innerHTML = html;
+
+  // Recommendations
+  let recs = [];
+  if(ret > 5) recs.push('⚠️ Returns above 5%/month are achievable but not sustainable long-term. Build your base case at 3%, your target at 4%.');
+  if(reqAccount > 150000) recs.push('📍 Your required account is large. Start in LATAM — the lower cost base cuts the target by 40–60% vs USA.');
+  if(inject < 500) recs.push('💡 Even $300/month extra injected compounds dramatically over 5 years. Find one freelance client for this.');
+  recs.push(`🎯 Phase 1 goal: prove positive expectancy on paper first. ${loc.name} lifestyle becomes sustainable at $${reqAccount.toLocaleString()} with ${ret}% returns.`);
+  recs.push('📊 The fastest path: LATAM base cost + aggressive compounding + freelance/side income injections + consistent 3–4% monthly edge.');
+  recs.push('⏱ Realistic timeline to $10K/month: 5–8 years starting from $5K with $500/mo injection at 3.5% avg returns.');
+  document.getElementById('recommendations').innerHTML = recs.map(r => `<div style="margin-bottom:10px">${r}</div>`).join('');
+
+  // Timeline
+  const targets = {
+    latam: Math.round(LOC.latam.items.reduce((a,b)=>a+b[1],0) + tradingOH) / 0.75 / (ret/100),
+    bcn: Math.round(LOC.bcn.items.reduce((a,b)=>a+b[1],0) + tradingOH) / 0.75 / (ret/100),
+    usa: Math.round(LOC.usa.items.reduce((a,b)=>a+b[1],0) + tradingOH) / 0.75 / (ret/100),
+  };
+  renderTimelineChart(start, inject, targets);
+  renderMilestones(start, inject, ret, reqAccount, targets);
+}
+
+function compound(start, inject, r, months) {
+  let bal = start;
+  const curve = [bal];
+  for(let i=0;i<months;i++) { bal = bal*(1+r) + inject; curve.push(Math.round(bal)); }
+  return curve;
+}
+
+function renderTimelineChart(start, inject, targets) {
+  const months = Array.from({length:121},(_,i)=>i);
+  const labels = months.map(m => m%12===0 ? 'Y'+(m/12) : '');
+  const c1 = compound(start, inject, 0.02, 120);
+  const c2 = compound(start, inject, 0.035, 120);
+  const c3 = compound(start, inject, 0.05, 120);
+
+  if(timelineChart) timelineChart.destroy();
+  timelineChart = new Chart(document.getElementById('timeline-chart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'Conservative 2%', data:c1, borderColor:'#555568', tension:0.4, pointRadius:0, borderWidth:1.5, fill:false },
+        { label:'Base 3.5%', data:c2, borderColor:'#e8ff47', tension:0.4, pointRadius:0, borderWidth:2, fill:false },
+        { label:'Optimistic 5%', data:c3, borderColor:'#3dffa0', tension:0.4, pointRadius:0, borderWidth:1.5, fill:false },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false},
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(c)=>c.dataset.label+': $'+c.parsed.y.toLocaleString() } } },
+      scales:{
+        x:{ grid:{color:'rgba(34,34,46,.4)'}, ticks:{color:'#555568',font:{size:10}} },
+        y:{ grid:{color:'rgba(34,34,46,.4)'}, ticks:{color:'#555568',font:{size:10}, callback:(v)=>'$'+Math.round(v/1000)+'k'} }
+      },
+      annotation: {}
+    }
+  });
+}
+
+function renderMilestones(start, inject, ret, reqAccount, targets) {
+  const r = ret/100;
+  function monthsTo(target) {
+    let bal=start, m=0;
+    while(bal<target && m<240){ bal=bal*(1+r)+inject; m++; }
+    return m<240 ? m : null;
+  }
+  const mLatam = monthsTo(targets.latam);
+  const mBcn = monthsTo(targets.bcn);
+  const m10k = monthsTo(400000/r*r); // approx for $10K/mo
+  const m5k = monthsTo(250000*r*r);
+
+  const fmt = m => m ? `~${Math.round(m/12*10)/10} years (Month ${m})` : '>20 years';
+
+  document.getElementById('money-timeline').innerHTML = `
+    <div class="tl-item current"><div class="tl-dot"></div>
+      <div class="tl-time">Now</div><div class="tl-title">Paper trading starts</div>
+      <div class="tl-desc">$0 profit target. Build edge, log 50+ trades, prove expectancy >0R.</div>
+    </div>
+    <div class="tl-item future"><div class="tl-dot"></div>
+      <div class="tl-time">Month 6–7</div><div class="tl-title">First live trade (micro size)</div>
+      <div class="tl-desc">€200–500 real account. 0.5% risk per trade max. Emotional management phase.</div>
+    </div>
+    <div class="tl-item future"><div class="tl-dot"></div>
+      <div class="tl-time">${fmt(mLatam)}</div><div class="tl-title accent">🌎 LATAM lifestyle funded</div>
+      <div class="tl-desc">Account reaches $${Math.round(targets.latam).toLocaleString()} — trading covers LATAM living at ${ret}%/mo.</div>
+    </div>
+    <div class="tl-item future"><div class="tl-dot"></div>
+      <div class="tl-time">${fmt(mBcn)}</div><div class="tl-title" style="color:var(--accent2)">🇪🇸 Barcelona lifestyle funded</div>
+      <div class="tl-desc">Account reaches $${Math.round(targets.bcn).toLocaleString()} — Barcelona covered. Serious tech stack by now.</div>
+    </div>
+    <div class="tl-item future"><div class="tl-dot"></div>
+      <div class="tl-time">Year 5–8</div><div class="tl-title green">$5K pocket + $5K reinvest</div>
+      <div class="tl-desc">Requires $300K+ account, algorithmic edge, or side income stream alongside trading.</div>
+    </div>
+  `;
+}
+
+// ──────────────────────────────────────────────────────────
+// JOURNAL
+// ──────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  ['f-entry','f-sl','f-tp'].forEach(id => document.getElementById(id).oninput = previewRR);
+  updateMoney();
+  renderJournal();
+  updatePhase();
+  renderAgents();
+  renderSentHistory();
+  showAlgo('ema');
+});
+
+function previewRR() {
+  const e=parseFloat(document.getElementById('f-entry').value);
+  const sl=parseFloat(document.getElementById('f-sl').value);
+  const tp=parseFloat(document.getElementById('f-tp').value);
+  if(!e||!sl||!tp||isNaN(e)||isNaN(sl)||isNaN(tp)) { document.getElementById('rr-preview').textContent=''; return; }
+  const risk=Math.abs(e-sl), reward=Math.abs(tp-e);
+  if(risk===0) return;
+  const rr=(reward/risk).toFixed(2);
+  const ok=parseFloat(rr)>=2;
+  document.getElementById('rr-preview').style.color = ok?'var(--green)':'var(--red)';
+  document.getElementById('rr-preview').textContent = `R:R ${rr}:1 ${ok?'✓ valid':'✗ below 2:1'}`;
+}
+
+function addTrade(overrides={}) {
+  const pair = (overrides.pair || document.getElementById('f-pair').value.trim().toUpperCase()) || '—';
+  const date = overrides.date || document.getElementById('f-date').value || new Date().toISOString().slice(0,10);
+  const dir = overrides.dir || document.getElementById('f-dir').value;
+  const entry = parseFloat(overrides.entry || document.getElementById('f-entry').value)||null;
+  const sl = parseFloat(overrides.sl || document.getElementById('f-sl').value)||null;
+  const tp = parseFloat(overrides.tp || document.getElementById('f-tp').value)||null;
+  const result = overrides.result || document.getElementById('f-result').value;
+  const notes = overrides.notes || document.getElementById('f-notes').value.trim();
+  const rr = (entry&&sl&&tp) ? ((Math.abs(tp-entry)/Math.abs(entry-sl)).toFixed(2)) : null;
+  const fromAgent = overrides.fromAgent||false;
+
+  trades.unshift({id:Date.now(), date, pair, dir, entry, sl, tp, result, notes, rr, fromAgent});
+  localStorage.setItem('tos_trades', JSON.stringify(trades));
+  renderJournal();
+  renderEquityChart();
+  updatePhase();
+  document.getElementById('f-pair').value='';
+  document.getElementById('f-entry').value='';
+  document.getElementById('f-sl').value='';
+  document.getElementById('f-tp').value='';
+  document.getElementById('f-notes').value='';
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('rr-preview').textContent='';
+}
+
+function deleteTrade(id) {
+  trades = trades.filter(t=>t.id!==id);
+  localStorage.setItem('tos_trades', JSON.stringify(trades));
+  renderJournal();
+  renderEquityChart();
+  updatePhase();
+}
+
+function renderJournal() {
+  const closed = trades.filter(t=>t.result==='WIN'||t.result==='LOSS');
+  const wins = trades.filter(t=>t.result==='WIN');
+  const rrVals = trades.filter(t=>t.rr).map(t=>parseFloat(t.rr));
+  const wr = closed.length ? Math.round(wins.length/closed.length*100) : null;
+  const avgRR = rrVals.length ? (rrVals.reduce((a,b)=>a+b,0)/rrVals.length).toFixed(2) : null;
+  let exp = null;
+  if(closed.length>=5) {
+    const wr2=wins.length/closed.length;
+    const winRR=wins.filter(t=>t.rr).length?wins.filter(t=>t.rr).reduce((a,t)=>a+parseFloat(t.rr),0)/wins.filter(t=>t.rr).length:1;
+    exp=((wr2*winRR)-((1-wr2)*1)).toFixed(2);
+  }
+
+  document.getElementById('k-total').textContent=trades.length;
+  const wrEl=document.getElementById('k-wr');
+  if(wr!==null){wrEl.textContent=wr+'%';wrEl.style.color=wr>=45?'var(--green)':'var(--red)';}else{wrEl.textContent='—';wrEl.style.color='';}
+  const rrEl=document.getElementById('k-rr');
+  if(avgRR){rrEl.textContent=avgRR+':1';rrEl.style.color=parseFloat(avgRR)>=2?'var(--green)':'var(--yellow)';}else{rrEl.textContent='—';rrEl.style.color='';}
+  const expEl=document.getElementById('k-exp');
+  if(exp){expEl.textContent=exp+'R';expEl.style.color=parseFloat(exp)>0?'var(--green)':'var(--red)';}else{expEl.textContent='<5 trades';expEl.style.color='';}
+
+  const el=document.getElementById('trades-table');
+  if(trades.length===0){el.innerHTML='<div class="empty-state"><div class="empty-icon">📓</div>No trades logged yet. Your first paper trade goes here.</div>';return;}
+  el.innerHTML=`<table>
+    <thead><tr><th>Date</th><th>Pair</th><th>Dir</th><th>Entry</th><th>SL</th><th>TP</th><th>R:R</th><th>Result</th><th>Notes</th><th></th></tr></thead>
+    <tbody>${trades.map(t=>`<tr>
+      <td class="mono muted">${t.date}</td>
+      <td style="font-weight:500">${t.pair} ${t.fromAgent?'<span style="font-size:.6rem;color:var(--purple)">🤖</span>':''}</td>
+      <td><span class="badge ${t.dir==='LONG'?'b-long':'b-short'}">${t.dir}</span></td>
+      <td class="mono">${t.entry||'—'}</td>
+      <td class="mono muted">${t.sl||'—'}</td>
+      <td class="mono muted">${t.tp||'—'}</td>
+      <td class="mono ${t.rr&&parseFloat(t.rr)>=2?'green':t.rr?'yellow':''}">${t.rr?t.rr+':1':'—'}</td>
+      <td><span class="badge b-${t.result.toLowerCase()}">${t.result}</span></td>
+      <td class="muted" style="font-size:.72rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.notes||''}</td>
+      <td><button class="btn btn-sm btn-red" style="padding:3px 6px;font-size:.65rem" onclick="deleteTrade(${t.id})">✕</button></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function renderEquityChart() {
+  const closed = [...trades].reverse().filter(t=>t.result==='WIN'||t.result==='LOSS');
+  if(closed.length<2) { if(equityChart){equityChart.destroy();equityChart=null;} return; }
+  let eq=0; const data=closed.map(t=>{ eq+=t.result==='WIN'?1:-1; return eq; });
+  if(equityChart) equityChart.destroy();
+  equityChart = new Chart(document.getElementById('equity-chart'),{
+    type:'line',
+    data:{ labels:closed.map((_,i)=>i+1), datasets:[{ data, borderColor:data[data.length-1]>=0?'#3dffa0':'#ff4f6d', tension:0.4, pointRadius:0, borderWidth:2, fill:true, backgroundColor:data[data.length-1]>=0?'rgba(61,255,160,.05)':'rgba(255,79,109,.05)' }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{display:false}, y:{grid:{color:'rgba(34,34,46,.3)'},ticks:{color:'#555568',font:{size:10}}} } }
+  });
+}
+
+function updatePhase() {
+  const n = trades.length;
+  const phase = n<10?'PHASE 1 — PAPER':n<50?'PHASE 1 — BUILDING':n>=50?'PHASE 2 — VALIDATE':'PHASE 1';
+  document.getElementById('phase-pill').textContent=phase;
+  document.getElementById('phase-progress').textContent=`${n} / 50 trades logged`;
+}
+
+function exportCSV() {
+  if(!trades.length){alert('No trades to export.');return;}
+  const h='Date,Pair,Direction,Entry,SL,TP,RR,Result,Notes\n';
+  const r=trades.map(t=>[t.date,t.pair,t.dir,t.entry||'',t.sl||'',t.tp||'',t.rr||'',t.result,t.notes||''].join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(h+r);
+  a.download='trades_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+// ──────────────────────────────────────────────────────────
+// AGENTS
+// ──────────────────────────────────────────────────────────
+async function generateSignals() {
+  const btn=document.getElementById('gen-btn');
+  btn.innerHTML='<span class="spinner" style="display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,.3);border-top-color:#0a0a0f;border-radius:50%;animation:spin .6s linear infinite"></span> Analyzing...';
+  btn.disabled=true;
+
+  const prompt = `You are a forex and crypto paper trading signal generator. Generate exactly 2 paper trade signals. Use realistic current price levels (EUR/USD ~1.08-1.10, GBP/USD ~1.26-1.28, BTC/USD ~60000-70000).
+
+Rules: Only generate LONG or SHORT. R:R must be >= 2.0. Confidence 50-85%. Be realistic, not optimistic.
+
+Return ONLY a JSON array, no other text:
+[
+  {
+    "pair": "EURUSD",
+    "direction": "LONG",
+    "entry": 1.0854,
+    "sl": 1.0820,
+    "tp": 1.0922,
+    "rr": 2.0,
+    "confidence": 68,
+    "timeframe": "H4",
+    "reasoning": "Two-sentence reasoning based on EMA/RSI/support levels."
+  }
+]`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:800, messages:[{role:'user',content:prompt}] })
+    });
+    const data = await res.json();
+    let text = data.content[0].text.trim();
+    text = text.replace(/```json|```/g,'').trim();
+    const signals = JSON.parse(text);
+    signals.forEach(s => { s.id=Date.now()+Math.random(); s.ts=new Date().toLocaleTimeString(); });
+    pendingSignals = [...pendingSignals, ...signals];
+    totalSignals += signals.length;
+    localStorage.setItem('tos_sigcount', totalSignals);
+    renderAgents();
+  } catch(e) {
+    alert('Signal generation failed. Check console. '+e.message);
+  }
+  btn.innerHTML='⚡ Generate Signals';
+  btn.disabled=false;
+}
+
+function renderAgents() {
+  const badge=document.getElementById('agent-count');
+  if(pendingSignals.length>0){badge.style.display='';badge.textContent=pendingSignals.length;}else{badge.style.display='none';}
+  document.getElementById('pending-count').textContent=pendingSignals.length+' signal'+(pendingSignals.length!==1?'s':'')+' waiting';
+  document.getElementById('signals-count').textContent=totalSignals+' total';
+
+  const pq=document.getElementById('pending-queue');
+  if(pendingSignals.length===0){
+    pq.innerHTML='<div class="empty-state"><div class="empty-icon">🤖</div>Click "Generate Signals" to have Claude analyze markets and propose paper trades.<br>You approve or reject each one.</div>';
+  } else {
+    pq.innerHTML=pendingSignals.map(s=>`
+      <div class="agent-card ${s.direction==='LONG'?'bullish':'bearish'}" id="sig-${s.id}">
+        <div class="agent-header">
+          <div class="flex gap8" style="align-items:center">
+            <span class="agent-pair">${s.pair}</span>
+            <span class="badge ${s.direction==='LONG'?'b-long':'b-short'}">${s.direction}</span>
+            <span class="badge b-open" style="font-size:.58rem">${s.timeframe||'H4'}</span>
+          </div>
+          <div class="flex gap8" style="align-items:center">
+            <span style="font-family:var(--fm);font-size:.7rem;color:var(--muted)">${s.ts}</span>
+            <span class="badge b-pend">${s.confidence}% conf</span>
+          </div>
+        </div>
+        <div class="agent-meta">
+          <div><div class="agent-stat-label">Entry</div><div class="agent-stat-val">${s.entry}</div></div>
+          <div><div class="agent-stat-label">Stop Loss</div><div class="agent-stat-val red">${s.sl}</div></div>
+          <div><div class="agent-stat-label">Take Profit</div><div class="agent-stat-val green">${s.tp}</div></div>
+          <div><div class="agent-stat-label">R:R</div><div class="agent-stat-val ${parseFloat(s.rr)>=2?'green':'yellow'}">${parseFloat(s.rr).toFixed(1)}:1</div></div>
+        </div>
+        <div class="agent-reason">${s.reasoning}</div>
+        <div class="agent-actions">
+          <button class="btn btn-green btn-sm" onclick="approveSignal('${s.id}')">✓ Approve Paper Trade</button>
+          <button class="btn btn-red btn-sm" onclick="rejectSignal('${s.id}')">✕ Reject</button>
+        </div>
+      </div>`).join('');
+  }
+
+  const el=document.getElementById('executed-list');
+  if(executedPaper.length===0){
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">✓</div>Approved signals will appear here and be logged to your journal.</div>';
+  } else {
+    el.innerHTML=`<table><thead><tr><th>Time</th><th>Pair</th><th>Dir</th><th>Entry</th><th>SL</th><th>TP</th><th>R:R</th><th>Conf</th></tr></thead>
+    <tbody>${executedPaper.map(s=>`<tr>
+      <td class="mono muted">${s.ts}</td>
+      <td style="font-weight:500">${s.pair}</td>
+      <td><span class="badge ${s.direction==='LONG'?'b-long':'b-short'}">${s.direction}</span></td>
+      <td class="mono">${s.entry}</td><td class="mono muted">${s.sl}</td><td class="mono muted">${s.tp}</td>
+      <td class="mono green">${parseFloat(s.rr).toFixed(1)}:1</td>
+      <td class="mono" style="color:var(--yellow)">${s.confidence}%</td>
+    </tr>`).join('')}</tbody></table>`;
+  }
+}
+
+function approveSignal(id) {
+  const sig = pendingSignals.find(s=>s.id==id);
+  if(!sig) return;
+  executedPaper.unshift(sig);
+  localStorage.setItem('tos_paper', JSON.stringify(executedPaper));
+  pendingSignals = pendingSignals.filter(s=>s.id!=id);
+  addTrade({ pair:sig.pair, dir:sig.direction, entry:sig.entry, sl:sig.sl, tp:sig.tp, result:'OPEN', notes:`Agent signal — ${sig.timeframe} — ${sig.confidence}% confidence`, fromAgent:true });
+  renderAgents();
+}
+
+function rejectSignal(id) {
+  pendingSignals = pendingSignals.filter(s=>s.id!=id);
+  renderAgents();
+}
+
+// ──────────────────────────────────────────────────────────
+// SENTIMENT
+// ──────────────────────────────────────────────────────────
+async function analyzeSentiment() {
+  const asset = document.getElementById('sent-asset').value.trim();
+  const context = document.getElementById('sent-context').value.trim();
+  if(!asset){alert('Enter an asset or pair first.');return;}
+
+  const btn=document.getElementById('sent-btn');
+  btn.textContent='Analyzing...';btn.disabled=true;
+
+  const prompt = `Analyze market sentiment for: ${asset}${context?'\n\nContext/headlines:\n'+context:''}\n\nReturn ONLY valid JSON (no markdown, no preamble):\n{"score":73,"label":"bullish","summary":"One concise sentence.","bullish":["driver1","driver2","driver3"],"bearish":["driver1","driver2"],"recommendation":"SHORT actionable sentence for a trader."}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:prompt}]})
+    });
+    const data=await res.json();
+    let text=data.content[0].text.trim().replace(/```json|```/g,'').trim();
+    const r=JSON.parse(text);
+    renderSentiment(r, asset);
+    sentHistory.unshift({asset, score:r.score, label:r.label, ts:new Date().toLocaleString(), summary:r.summary});
+    if(sentHistory.length>10) sentHistory=sentHistory.slice(0,10);
+    localStorage.setItem('tos_sent',JSON.stringify(sentHistory));
+    renderSentHistory();
+  } catch(e){alert('Sentiment analysis failed: '+e.message);}
+  btn.textContent='🔥 Analyze Sentiment';btn.disabled=false;
+}
+
+function renderSentiment(r, asset) {
+  const score=r.score;
+  const color = score<35?'var(--red)':score<65?'var(--yellow)':'var(--green)';
+  document.getElementById('heat-number').textContent=score;
+  document.getElementById('heat-number').style.color=color;
+  document.getElementById('heat-label').textContent=r.label.toUpperCase()+' — '+asset;
+  document.getElementById('heat-label').style.color=color;
+  document.getElementById('heat-needle').style.left=(score)+'%';
+
+  let html='';
+  if(r.bullish) r.bullish.forEach(d=>{ html+=`<div class="driver-row"><span class="driver-icon green">▲</span><div class="driver-text"><strong>Bullish:</strong> ${d}</div></div>`; });
+  if(r.bearish) r.bearish.forEach(d=>{ html+=`<div class="driver-row"><span class="driver-icon red">▼</span><div class="driver-text"><strong>Bearish:</strong> ${d}</div></div>`; });
+  if(r.recommendation) html+=`<div style="margin-top:12px;padding:10px;background:var(--surface);border-radius:6px;font-size:.76rem;color:var(--accent)">→ ${r.recommendation}</div>`;
+  document.getElementById('sent-drivers').innerHTML=html||'<div class="muted">No drivers extracted.</div>';
+}
+
+function renderSentHistory() {
+  const el=document.getElementById('sent-history');
+  if(!sentHistory.length){el.innerHTML='<div class="muted" style="font-size:.78rem">Previous sentiment scans will appear here.</div>';return;}
+  el.innerHTML=sentHistory.map(h=>{
+    const c=h.score<35?'var(--red)':h.score<65?'var(--yellow)':'var(--green)';
+    return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(34,34,46,.4)">
+      <span style="font-family:var(--fm);font-size:1rem;font-weight:800;color:${c};min-width:36px">${h.score}</span>
+      <div><div style="font-weight:500;font-size:.8rem">${h.asset}</div><div style="font-size:.65rem;color:var(--muted)">${h.ts}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ──────────────────────────────────────────────────────────
+// LAB — ALGORITHMS
+// ──────────────────────────────────────────────────────────
+const ALGOS = {
+  ema: {
+    desc: 'The EMA Crossover is your core entry filter. When EMA 20 crosses above EMA 50, trend is up. Only take LONG setups in this state. Add RSI > 50 confirmation before entry.',
+    code: `<span class="c"># EMA Crossover Strategy — Python</span>
+<span class="k">import</span> pandas <span class="k">as</span> pd
+<span class="k">import</span> yfinance <span class="k">as</span> yf
+
+<span class="k">def</span> <span class="f">ema_signals</span>(ticker=<span class="s">'EURUSD=X'</span>, period=<span class="s">'6mo'</span>, fast=<span class="n">20</span>, slow=<span class="n">50</span>):
+    df = yf.<span class="f">download</span>(ticker, period=period, interval=<span class="s">'1h'</span>)
+    df[<span class="s">'EMA_fast'</span>] = df[<span class="s">'Close'</span>].ewm(span=fast, adjust=<span class="k">False</span>).mean()
+    df[<span class="s">'EMA_slow'</span>] = df[<span class="s">'Close'</span>].ewm(span=slow, adjust=<span class="k">False</span>).mean()
+    df[<span class="s">'above'</span>] = (df[<span class="s">'EMA_fast'</span>] > df[<span class="s">'EMA_slow'</span>]).astype(int)
+    df[<span class="s">'cross'</span>] = df[<span class="s">'above'</span>].diff()
+    entries = df[df[<span class="s">'cross'</span>] != <span class="n">0</span>].copy()
+    entries[<span class="s">'signal'</span>] = entries[<span class="s">'cross'</span>].map({<span class="n">1</span>:<span class="s">'LONG'</span>, -<span class="n">1</span>:<span class="s">'SHORT'</span>})
+    <span class="k">return</span> entries[[<span class="s">'Close'</span>,<span class="s">'EMA_fast'</span>,<span class="s">'EMA_slow'</span>,<span class="s">'signal'</span>]]
+
+signals = <span class="f">ema_signals</span>()
+<span class="f">print</span>(signals.tail(<span class="n">5</span>))`
+  },
+  rsi: {
+    desc: 'RSI crossing 50 is your momentum filter. Do not enter a LONG trade if RSI < 50, even if EMA says the trend is up. Wait for RSI to cross 50 upward — that is the confirmation.',
+    code: `<span class="c"># RSI Filter — Python (add to EMA strategy)</span>
+<span class="k">import</span> pandas_ta <span class="k">as</span> ta
+
+<span class="k">def</span> <span class="f">add_rsi_filter</span>(df, period=<span class="n">14</span>):
+    df[<span class="s">'RSI'</span>] = ta.<span class="f">rsi</span>(df[<span class="s">'Close'</span>], length=period)
+    df[<span class="s">'rsi_cross_50'</span>] = (
+        (df[<span class="s">'RSI'</span>] > <span class="n">50</span>) & (df[<span class="s">'RSI'</span>].shift(<span class="n">1</span>) <= <span class="n">50</span>)
+    )
+    <span class="c"># Valid LONG: EMA cross UP + RSI crossing 50</span>
+    df[<span class="s">'valid_long'</span>] = (
+        (df[<span class="s">'EMA_fast'</span>] > df[<span class="s">'EMA_slow'</span>]) &
+        df[<span class="s">'rsi_cross_50'</span>]
+    )
+    <span class="k">return</span> df
+
+<span class="c"># pip install pandas-ta</span>
+<span class="c"># Combine with EMA strategy above for full setup validation`
+  },
+  bb: {
+    desc: 'Bollinger Bands in R — squeeze breakouts signal volatility expansion. Use TTR package for production-grade indicator calculation on OHLCV data.',
+    code: `<span class="c"># Bollinger Bands — R with quantmod + TTR</span>
+<span class="k">library</span>(quantmod)
+<span class="k">library</span>(TTR)
+
+<span class="c"># Fetch EUR/USD hourly</span>
+getSymbols(<span class="s">"EURUSD=X"</span>, src=<span class="s">"yahoo"</span>, auto.assign=<span class="k">TRUE</span>)
+price <- Cl(<span class="f">get</span>(<span class="s">"EURUSD=X"</span>))
+
+<span class="c"># Calculate Bollinger Bands (20-period, 2 SD)</span>
+bb <- <span class="f">BBands</span>(price, n=<span class="n">20</span>, sd=<span class="n">2</span>)
+
+<span class="c"># Detect squeeze (band width < 20-period average)</span>
+bw <- bb[,<span class="s">"up"</span>] - bb[,<span class="s">"dn"</span>]
+bb_squeeze <- bw < <span class="f">rollapply</span>(bw, <span class="n">20</span>, mean, na.rm=<span class="k">TRUE</span>)
+
+<span class="c"># Breakout signal: price breaks upper band after squeeze</span>
+breakout_long <- <span class="f">lag</span>(bb_squeeze,<span class="n">1</span>) & price > bb[,<span class="s">"up"</span>]
+
+<span class="f">tail</span>(<span class="f">merge</span>(price, bb, bb_squeeze, breakout_long), <span class="n">10</span>)`
+  },
+  ml: {
+    desc: 'Logistic Regression to predict WIN/LOSS from your own trade features. Once you have 50+ closed trades, use this to find which conditions predict success. Phase 5 territory.',
+    code: `<span class="c"># ML Signal Filter — scikit-learn on your trade log</span>
+<span class="k">import</span> pandas <span class="k">as</span> pd
+<span class="k">from</span> sklearn.linear_model <span class="k">import</span> LogisticRegression
+<span class="k">from</span> sklearn.model_selection <span class="k">import</span> cross_val_score
+<span class="k">from</span> sklearn.preprocessing <span class="k">import</span> StandardScaler
+
+<span class="c"># Load your trade log CSV (exported from journal)</span>
+df = pd.<span class="f">read_csv</span>(<span class="s">'trades.csv'</span>)
+df[<span class="s">'won'</span>] = (df[<span class="s">'Result'</span>] == <span class="s">'WIN'</span>).astype(int)
+
+<span class="c"># Feature engineering — add from your data</span>
+df[<span class="s">'rr_val'</span>] = df[<span class="s">'RR'</span>].str.replace(<span class="s">':1'</span>,<span class="s">''</span>).astype(float)
+df[<span class="s">'is_long'</span>] = (df[<span class="s">'Direction'</span>] == <span class="s">'LONG'</span>).astype(int)
+<span class="c"># Add: EMA_spread, RSI_value, hour_of_day, day_of_week</span>
+
+features = [<span class="s">'rr_val'</span>, <span class="s">'is_long'</span>]  <span class="c"># add more features</span>
+X = df[features].dropna()
+y = df.loc[X.index, <span class="s">'won'</span>]
+
+scaler = StandardScaler()
+X_scaled = scaler.<span class="f">fit_transform</span>(X)
+
+model = <span class="f">LogisticRegression</span>()
+scores = <span class="f">cross_val_score</span>(model, X_scaled, y, cv=<span class="n">5</span>, scoring=<span class="s">'roc_auc'</span>)
+<span class="f">print</span>(<span class="s">f"AUC: {scores.mean():.3f} ± {scores.std():.3f}"</span>)
+model.<span class="f">fit</span>(X_scaled, y)
+<span class="f">print</span>(<span class="s">"Coefficients:"</span>, dict(<span class="f">zip</span>(features, model.coef_[<span class="n">0</span>])))`
+  },
+  macd: {
+    desc: 'MACD adds trend + momentum in one indicator. The signal line crossover and histogram direction confirm the EMA/RSI entry. Use as a third filter, not a primary signal.',
+    code: `<span class="c"># MACD Strategy — Python with pandas_ta</span>
+<span class="k">import</span> yfinance <span class="k">as</span> yf
+<span class="k">import</span> pandas_ta <span class="k">as</span> ta
+
+df = yf.<span class="f">download</span>(<span class="s">'EURUSD=X'</span>, period=<span class="s">'3mo'</span>, interval=<span class="s">'1h'</span>)
+
+<span class="c"># MACD (12, 26, 9) — standard settings</span>
+macd = df.<span class="f">ta</span>.<span class="f">macd</span>(fast=<span class="n">12</span>, slow=<span class="n">26</span>, signal=<span class="n">9</span>)
+df = df.<span class="f">join</span>(macd)
+
+<span class="c"># Signal: MACD line crosses above signal line</span>
+df[<span class="s">'macd_cross_up'</span>] = (
+    (df[<span class="s">'MACD_12_26_9'</span>] > df[<span class="s">'MACDs_12_26_9'</span>]) &
+    (df[<span class="s">'MACD_12_26_9'</span>].shift(<span class="n">1</span>) <= df[<span class="s">'MACDs_12_26_9'</span>].shift(<span class="n">1</span>))
+)
+
+<span class="c"># Histogram turning positive (momentum shifting)</span>
+df[<span class="s">'hist_positive'</span>] = df[<span class="s">'MACDh_12_26_9'</span>] > <span class="n">0</span>
+
+<span class="c"># Full entry condition: EMA trend UP + MACD cross + histogram positive</span>
+df[<span class="s">'strong_long'</span>] = df[<span class="s">'macd_cross_up'</span>] & df[<span class="s">'hist_positive'</span>]
+<span class="f">print</span>(df[[<span class="s">'Close'</span>,<span class="s">'MACD_12_26_9'</span>,<span class="s">'MACDs_12_26_9'</span>,<span class="s">'strong_long'</span>]].tail(<span class="n">5</span>))`
+  },
+  backtest: {
+    desc: 'Walk-forward backtester template. Never test on the same data you optimized on — this is the #1 mistake beginners make. Walk-forward testing splits data chronologically and prevents lookahead bias.',
+    code: `<span class="c"># Walk-Forward Backtester — Python</span>
+<span class="k">import</span> pandas <span class="k">as</span> pd
+<span class="k">import</span> numpy <span class="k">as</span> np
+<span class="k">import</span> yfinance <span class="k">as</span> yf
+
+<span class="k">def</span> <span class="f">walk_forward_test</span>(ticker, strategy_fn, train_months=<span class="n">3</span>, test_months=<span class="n">1</span>):
+    df = yf.<span class="f">download</span>(ticker, period=<span class="s">'2y'</span>, interval=<span class="s">'1h'</span>)
+    results = []
+    start = <span class="n">0</span>
+    train_bars = train_months * <span class="n">22</span> * <span class="n">8</span>   <span class="c"># ~8 bars/day</span>
+    test_bars  = test_months  * <span class="n">22</span> * <span class="n">8</span>
+    <span class="k">while</span> start + train_bars + test_bars < <span class="f">len</span>(df):
+        train = df.iloc[start : start + train_bars]
+        test  = df.iloc[start + train_bars : start + train_bars + test_bars]
+        <span class="c"># 1. Optimize params on train window</span>
+        best_params = strategy_fn.<span class="f">optimize</span>(train)
+        <span class="c"># 2. Evaluate on out-of-sample test window</span>
+        perf = strategy_fn.<span class="f">evaluate</span>(test, best_params)
+        results.<span class="f">append</span>(perf)
+        start += test_bars  <span class="c"># slide window</span>
+    <span class="k">return</span> pd.<span class="f">DataFrame</span>(results)
+
+<span class="c"># Replace strategy_fn with your EMA/RSI strategy class
+# Key metrics to track: win_rate, avg_rr, expectancy, max_drawdown`
+  }
+};
+
+function showAlgo(key) {
+  document.querySelectorAll('.algo-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('algo-desc').textContent = ALGOS[key].desc;
+  document.getElementById('algo-code').innerHTML = ALGOS[key].code;
+}
+
+// ──────────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────────
+window.onload = () => {
+  document.getElementById('f-date').value = new Date().toISOString().slice(0,10);
+  ['f-entry','f-sl','f-tp'].forEach(id => document.getElementById(id).addEventListener('input', previewRR));
+  updateMoney();
+  renderJournal();
+  renderEquityChart();
+  updatePhase();
+  renderAgents();
+  renderSentHistory();
+  showPane('money');
+  const algoTabBtns = document.querySelectorAll('.algo-tab');
+  if(algoTabBtns.length) { showAlgoInit('ema'); }
+};
+
+function showAlgoInit(key) {
+  document.getElementById('algo-desc').textContent = ALGOS[key].desc;
+  document.getElementById('algo-code').innerHTML = ALGOS[key].code;
+}
+
+document.querySelectorAll('.algo-tab').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.algo-tab').forEach(t=>t.classList.remove('active'));
+    this.classList.add('active');
+    const key = this.getAttribute('onclick').match(/'(\w+)'/)?.[1];
+    if(key && ALGOS[key]) {
+      document.getElementById('algo-desc').textContent = ALGOS[key].desc;
+      document.getElementById('algo-code').innerHTML = ALGOS[key].code;
+    }
+  });
+});
+</script>
+</body>
+</html>

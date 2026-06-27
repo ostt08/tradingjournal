@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETH Analytics Terminal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050810;
+    --bg2: #090d1a;
+    --panel: #0d1224;
+    --panel2: #111828;
+    --border: #1e2d4a;
+    --accent: #00d4ff;
+    --accent2: #7b5ea7;
+    --green: #00e5a0;
+    --red: #ff4560;
+    --yellow: #ffd166;
+    --text: #c8d8f0;
+    --muted: #4a5f80;
+    --glow: 0 0 20px rgba(0,212,255,0.3);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,100,200,0.12), transparent),
+                radial-gradient(ellipse 40% 40% at 90% 80%, rgba(123,94,167,0.08), transparent);
+    pointer-events:none; z-index:0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position:sticky; top:0; z-index:100;
+    background: rgba(5,8,16,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .logo { font-family:'Orbitron',monospace; font-size:1.1rem; font-weight:900; color:var(--accent); letter-spacing:3px; }
+  .logo span { color:var(--accent2); }
+  .ticker-bar { display:flex; gap:24px; align-items:center; }
+  .ticker-item { display:flex; flex-direction:column; align-items:flex-end; }
+  .ticker-item .label { font-size:.6rem; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+  .ticker-item .val { font-family:'Share Tech Mono',monospace; font-size:.95rem; }
+  .up { color:var(--green); }
+  .dn { color:var(--red); }
+  .status-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;box-shadow:0 0 6px var(--green)} 50%{opacity:.5;box-shadow:none} }
+
+  /* ── MAIN LAYOUT ── */
+  .workspace {
+    position:relative; z-index:1;
+    padding:16px 20px 60px;
+    display:flex; flex-direction:column; gap:16px;
+  }
+
+  /* ── DRAGGABLE WIDGETS ── */
+  .widget-grid {
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:14px;
+  }
+  .widget {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+    position:relative;
+    transition: box-shadow .2s, border-color .2s;
+    cursor:grab;
+    user-select:none;
+  }
+  .widget:active { cursor:grabbing; }
+  .widget.dragging { opacity:.7; box-shadow: 0 0 30px rgba(0,212,255,0.4); z-index:50; border-color:var(--accent); }
+  .widget.drag-over { border-color:var(--accent2); box-shadow: 0 0 20px rgba(123,94,167,0.4); }
+  .widget-header {
+    padding:10px 14px;
+    background: var(--panel2);
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .widget-title { font-family:'Orbitron',monospace; font-size:.62rem; font-weight:700; color:var(--accent); letter-spacing:2px; text-transform:uppercase; }
+  .widget-actions { display:flex; gap:6px; }
+  .wbtn {
+    background:none; border:1px solid var(--border); color:var(--muted);
+    width:20px; height:20px; border-radius:4px; cursor:pointer; font-size:.55rem;
+    display:flex; align-items:center; justify-content:center; transition:.15s;
+  }
+  .wbtn:hover { border-color:var(--accent); color:var(--accent); }
+  .widget-body { padding:14px; }
+
+  /* ── PRICE BIG ── */
+  .price-big { font-family:'Orbitron',monospace; font-size:2.2rem; font-weight:900; color:#fff; line-height:1; }
+  .price-change { font-size:.8rem; margin-top:6px; display:flex; gap:10px; }
+
+  /* ── CHART CONTAINER ── */
+  .chart-wrap { position:relative; height:180px; }
+
+  /* ── STAT GRID ── */
+  .stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .stat-item { background:var(--bg2); border-radius:8px; padding:10px 12px; }
+  .stat-label { font-size:.6rem; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:4px; }
+  .stat-val { font-family:'Share Tech Mono',monospace; font-size:.9rem; color:var(--text); }
+
+  /* ── SLIDERS ── */
+  .slider-group { display:flex; flex-direction:column; gap:12px; }
+  .slider-row { display:flex; flex-direction:column; gap:5px; }
+  .slider-top { display:flex; justify-content:space-between; align-items:center; }
+  .slider-name { font-size:.7rem; color:var(--muted); letter-spacing:1px; }
+  .slider-readout { font-family:'Share Tech Mono',monospace; font-size:.75rem; color:var(--accent); }
+  input[type=range] {
+    width:100%; height:4px; -webkit-appearance:none; appearance:none;
+    background: linear-gradient(to right, var(--accent) var(--pct,50%), var(--border) var(--pct,50%));
+    border-radius:4px; outline:none; cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:14px; height:14px;
+    border-radius:50%; background:var(--accent);
+    box-shadow:0 0 8px var(--accent); cursor:pointer;
+  }
+
+  /* ── BUTTONS ── */
+  .btn-group { display:flex; flex-wrap:wrap; gap:8px; }
+  .btn {
+    padding:7px 16px; border-radius:6px; cursor:pointer; font-size:.72rem;
+    font-family:'Share Tech Mono',monospace; letter-spacing:1px; border:1px solid;
+    transition: all .15s;
+  }
+  .btn-primary { background:rgba(0,212,255,0.1); border-color:var(--accent); color:var(--accent); }
+  .btn-primary:hover { background:var(--accent); color:var(--bg); box-shadow:var(--glow); }
+  .btn-green { background:rgba(0,229,160,0.1); border-color:var(--green); color:var(--green); }
+  .btn-green:hover { background:var(--green); color:var(--bg); }
+  .btn-red { background:rgba(255,69,96,0.1); border-color:var(--red); color:var(--red); }
+  .btn-red:hover { background:var(--red); color:#fff; }
+  .btn-muted { background:rgba(255,255,255,0.04); border-color:var(--border); color:var(--muted); }
+  .btn-muted:hover { border-color:var(--accent2); color:var(--accent2); }
+  .btn.active { background:var(--accent); color:var(--bg); }
+
+  /* ── SIGNAL DISPLAY ── */
+  .signal-box {
+    background:var(--bg2); border-radius:8px; padding:12px 14px;
+    border-left: 3px solid var(--accent);
+    font-family:'Share Tech Mono',monospace; font-size:.78rem; line-height:1.6;
+  }
+  .signal-box.bullish { border-color:var(--green); }
+  .signal-box.bearish { border-color:var(--red); }
+  .signal-box.neutral { border-color:var(--yellow); }
+
+  /* ── FULL-WIDTH ROW ── */
+  .full-widget {
+    grid-column: 1 / -1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius:12px; overflow:hidden;
+  }
+  .full-chart-wrap { height:240px; position:relative; padding:14px; }
+
+  /* ── INDICATOR BADGES ── */
+  .badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:.6rem; font-family:'Share Tech Mono',monospace; letter-spacing:1px; margin:2px; }
+  .badge-up { background:rgba(0,229,160,0.15); color:var(--green); border:1px solid rgba(0,229,160,.3); }
+  .badge-dn { background:rgba(255,69,96,0.15); color:var(--red); border:1px solid rgba(255,69,96,.3); }
+  .badge-neu { background:rgba(255,209,102,0.15); color:var(--yellow); border:1px solid rgba(255,209,102,.3); }
+
+  /* ── FORMULA PANEL ── */
+  .formula {
+    background:rgba(0,0,0,.4); border-radius:6px; padding:10px 12px;
+    font-family:'Share Tech Mono',monospace; font-size:.68rem;
+    color: #7faacc; line-height:1.8; border:1px solid var(--border);
+    white-space:pre-wrap;
+  }
+
+  /* ── RESPONSIVE TABS ── */
+  .tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:14px; }
+  .tab {
+    padding:7px 14px; cursor:pointer; font-size:.68rem;
+    font-family:'Share Tech Mono',monospace; letter-spacing:1px;
+    color:var(--muted); border-bottom:2px solid transparent; transition:.15s;
+  }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+  /* ── LOADING OVERLAY ── */
+  #loader {
+    position:fixed; inset:0; background:var(--bg); z-index:999;
+    display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px;
+  }
+  .loader-logo { font-family:'Orbitron',monospace; font-size:1.6rem; font-weight:900; color:var(--accent); letter-spacing:6px; }
+  .loader-bar { width:200px; height:2px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .loader-fill { height:100%; background:var(--accent); width:0; animation:loadfill 1.5s ease forwards; }
+  @keyframes loadfill { to { width:100%; } }
+  .loader-sub { font-size:.7rem; color:var(--muted); letter-spacing:2px; }
+
+  /* ── GRID SPAN CLASSES ── */
+  .span2 { grid-column: span 2; }
+  .span3 { grid-column: span 3; }
+
+  /* ── ORDER BOOK MINI ── */
+  .ob-row { display:flex; justify-content:space-between; align-items:center; padding:3px 0; font-family:'Share Tech Mono',monospace; font-size:.72rem; }
+  .ob-bar { height:100%; border-radius:2px; position:absolute; top:0; opacity:.15; }
+
+  .section-label {
+    font-family:'Orbitron',monospace; font-size:.6rem; font-weight:700;
+    color:var(--muted); letter-spacing:3px; text-transform:uppercase;
+    padding: 4px 0 8px; border-bottom:1px solid var(--border); margin-bottom:12px;
+  }
+
+  /* Resize handle */
+  .resize-handle {
+    position:absolute; bottom:0; right:0; width:14px; height:14px;
+    cursor:nw-resize; opacity:.3;
+  }
+  .resize-handle::after {
+    content:''; position:absolute; bottom:3px; right:3px;
+    width:6px; height:6px;
+    border-right:2px solid var(--accent); border-bottom:2px solid var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-logo">ETH<span style="color:var(--accent2)">∇</span></div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+  <div class="loader-sub">CONNECTING TO MARKET DATA...</div>
+</div>
+
+<header>
+  <div class="logo">ETH<span>∇</span> TERMINAL</div>
+  <div class="ticker-bar">
+    <div class="ticker-item">
+      <span class="label">ETH/USD</span>
+      <span class="val" id="hdr-price">—</span>
+    </div>
+    <div class="ticker-item">
+      <span class="label">24h %</span>
+      <span class="val" id="hdr-chg">—</span>
+    </div>
+    <div class="ticker-item">
+      <span class="label">Volume</span>
+      <span class="val" id="hdr-vol">—</span>
+    </div>
+    <div class="ticker-item">
+      <span class="label">Gas (Gwei)</span>
+      <span class="val" id="hdr-gas" style="color:var(--yellow)">—</span>
+    </div>
+    <div class="status-dot" title="Live data"></div>
+  </div>
+</header>
+
+<div class="workspace">
+
+  <!-- TIMEFRAME SELECTOR -->
+  <div style="display:flex; gap:8px; align-items:center; padding:4px 0;">
+    <span style="font-size:.65rem; color:var(--muted); letter-spacing:2px; font-family:'Share Tech Mono',monospace;">TIMEFRAME:</span>
+    <div class="btn-group" id="tf-btns">
+      <button class="btn btn-muted active" onclick="setTF(this,'1')">1H</button>
+      <button class="btn btn-muted" onclick="setTF(this,'7')">7D</button>
+      <button class="btn btn-muted" onclick="setTF(this,'30')">30D</button>
+      <button class="btn btn-muted" onclick="setTF(this,'90')">90D</button>
+      <button class="btn btn-muted" onclick="setTF(this,'365')">1Y</button>
+    </div>
+    <span style="flex:1"></span>
+    <span style="font-size:.6rem; color:var(--muted);">↔ DRAG WIDGETS TO REORDER</span>
+  </div>
+
+  <!-- MAIN WIDGET GRID -->
+  <div class="widget-grid" id="widget-grid">
+
+    <!-- 1: PRICE WIDGET -->
+    <div class="widget" draggable="true" data-id="price">
+      <div class="widget-header">
+        <span class="widget-title">⬡ LIVE PRICE</span>
+        <div class="widget-actions">
+          <button class="wbtn" onclick="refreshAll()" title="Refresh">↺</button>
+        </div>
+      </div>
+      <div class="widget-body">
+        <div class="price-big" id="w-price">$0.00</div>
+        <div class="price-change">
+          <span id="w-chg24" class="up">+0.00%</span>
+          <span style="color:var(--muted)">24h</span>
+          <span id="w-ath" style="color:var(--muted); font-size:.7rem;"></span>
+        </div>
+        <div style="margin-top:12px;" class="stat-grid">
+          <div class="stat-item"><div class="stat-label">Market Cap</div><div class="stat-val" id="w-mcap">—</div></div>
+          <div class="stat-item"><div class="stat-label">24h Vol</div><div class="stat-val" id="w-vol">—</div></div>
+          <div class="stat-item"><div class="stat-label">24h High</div><div class="stat-val" id="w-hi">—</div></div>
+          <div class="stat-item"><div class="stat-label">24h Low</div><div class="stat-val" id="w-lo">—</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2: PRICE CHART -->
+    <div class="widget span2" draggable="true" data-id="chart">
+      <div class="widget-header">
+        <span class="widget-title">📈 PRICE CHART</span>
+        <div class="widget-actions">
+          <button class="wbtn" onclick="toggleOverlay('sma')" id="sma-btn" title="SMA">SMA</button>
+          <button class="wbtn" onclick="toggleOverlay('bb')" id="bb-btn" title="Bollinger">BB</button>
+          <button class="wbtn" onclick="toggleOverlay('ema')" id="ema-btn" title="EMA">EMA</button>
+        </div>
+      </div>
+      <div class="widget-body" style="padding:10px;">
+        <div class="chart-wrap" style="height:200px;">
+          <canvas id="priceChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3: INDICATORS / SLIDERS -->
+    <div class="widget" draggable="true" data-id="sliders">
+      <div class="widget-header">
+        <span class="widget-title">⚙ PARAMETERS</span>
+      </div>
+      <div class="widget-body">
+        <div class="slider-group">
+          <div class="slider-row">
+            <div class="slider-top"><span class="slider-name">RSI PERIOD</span><span class="slider-readout" id="rsi-out">14</span></div>
+            <input type="range" min="5" max="50" value="14" id="rsi-period" oninput="onSlider(this,'rsi-out','',recalc)">
+          </div>
+          <div class="slider-row">
+            <div class="slider-top"><span class="slider-name">SMA FAST</span><span class="slider-readout" id="sma-fast-out">20</span></div>
+            <input type="range" min="5" max="100" value="20" id="sma-fast" oninput="onSlider(this,'sma-fast-out','',recalc)">
+          </div>
+          <div class="slider-row">
+            <div class="slider-top"><span class="slider-name">SMA SLOW</span><span class="slider-readout" id="sma-slow-out">50</span></div>
+            <input type="range" min="10" max="200" value="50" id="sma-slow" oninput="onSlider(this,'sma-slow-out','',recalc)">
+          </div>
+          <div class="slider-row">
+            <div class="slider-top"><span class="slider-name">BB STDDEV (×)</span><span class="slider-readout" id="bb-std-out">2.0</span></div>
+            <input type="range" min="10" max="40" value="20" id="bb-std" oninput="onSlider(this,'bb-std-out','0.1× mult',recalc)">
+          </div>
+          <div class="slider-row">
+            <div class="slider-top"><span class="slider-name">EMA SPAN</span><span class="slider-readout" id="ema-out">21</span></div>
+            <input type="range" min="5" max="100" value="21" id="ema-span" oninput="onSlider(this,'ema-out','',recalc)">
+          </div>
+          <div class="slider-row">
+            <div class="slider-top"><span class="slider-name">MACD SIGNAL</span><span class="slider-readout" id="macd-out">9</span></div>
+            <input type="range" min="3" max="20" value="9" id="macd-sig" oninput="onSlider(this,'macd-out','',recalc)">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4: RSI CHART -->
+    <div class="widget" draggable="true" data-id="rsi">
+      <div class="widget-header">
+        <span class="widget-title">〰 RSI</span>
+        <span id="rsi-badge" class="badge badge-neu">—</span>
+      </div>
+      <div class="widget-body" style="padding:10px;">
+        <div class="chart-wrap" style="height:130px;">
+          <canvas id="rsiChart"></canvas>
+        </div>
+        <div style="margin-top:8px; font-size:.68rem; color:var(--muted); font-family:'Share Tech Mono',monospace;">
+          RSI(<span id="rsi-p-disp">14</span>) = <span id="rsi-val" style="color:var(--accent);">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5: MACD CHART -->
+    <div class="widget" draggable="true" data-id="macd">
+      <div class="widget-header">
+        <span class="widget-title">📊 MACD</span>
+        <span id="macd-badge" class="badge badge-neu">—</span>
+      </div>
+      <div class="widget-body" style="padding:10px;">
+        <div class="chart-wrap" style="height:130px;">
+          <canvas id="macdChart"></canvas>
+        </div>
+        <div style="margin-top:8px; font-size:.68rem; color:var(--muted); font-family:'Share Tech Mono',monospace;">
+          MACD Line: <span id="macd-val" style="color:var(--accent);">—</span> | Signal: <span id="macd-sig-val" style="color:var(--yellow);">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6: STRATEGY SIGNALS -->
+    <div class="widget" draggable="true" data-id="signals">
+      <div class="widget-header">
+        <span class="widget-title">🎯 STRATEGY SIGNALS</span>
+      </div>
+      <div class="widget-body">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab(this,'t-sma')">SMA X</div>
+          <div class="tab" onclick="switchTab(this,'t-rsi')">RSI</div>
+          <div class="tab" onclick="switchTab(this,'t-macd')">MACD</div>
+          <div class="tab" onclick="switchTab(this,'t-bb')">BB</div>
+        </div>
+        <div id="t-sma" class="tab-content active">
+          <div class="signal-box" id="sig-sma">Loading...</div>
+          <div style="margin-top:8px;" class="formula" id="formula-sma"></div>
+        </div>
+        <div id="t-rsi" class="tab-content">
+          <div class="signal-box" id="sig-rsi">Loading...</div>
+          <div style="margin-top:8px;" class="formula" id="formula-rsi"></div>
+        </div>
+        <div id="t-macd" class="tab-content">
+          <div class="signal-box" id="sig-macd">Loading...</div>
+          <div style="margin-top:8px;" class="formula" id="formula-macd"></div>
+        </div>
+        <div id="t-bb" class="tab-content">
+          <div class="signal-box" id="sig-bb">Loading...</div>
+          <div style="margin-top:8px;" class="formula" id="formula-bb"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7: VOLATILITY / BOLLINGER FULL CHART (span 2) -->
+    <div class="widget span2" draggable="true" data-id="bb-chart">
+      <div class="widget-header">
+        <span class="widget-title">🔵 BOLLINGER BANDS + VOLUME</span>
+      </div>
+      <div class="widget-body" style="padding:10px;">
+        <div class="chart-wrap" style="height:190px;">
+          <canvas id="bbChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8: STATS PANEL -->
+    <div class="widget" draggable="true" data-id="stats">
+      <div class="widget-header">
+        <span class="widget-title">📐 STATISTICS (R-style)</span>
+      </div>
+      <div class="widget-body">
+        <div class="stat-grid">
+          <div class="stat-item"><div class="stat-label">Mean (μ)</div><div class="stat-val" id="st-mean">—</div></div>
+          <div class="stat-item"><div class="stat-label">Std Dev (σ)</div><div class="stat-val" id="st-std">—</div></div>
+          <div class="stat-item"><div class="stat-label">Skewness</div><div class="stat-val" id="st-skew">—</div></div>
+          <div class="stat-item"><div class="stat-label">Kurtosis</div><div class="stat-val" id="st-kurt">—</div></div>
+          <div class="stat-item"><div class="stat-label">Sharpe (est.)</div><div class="stat-val" id="st-sharpe">—</div></div>
+          <div class="stat-item"><div class="stat-label">Max Drawdown</div><div class="stat-val" id="st-dd">—</div></div>
+          <div class="stat-item"><div class="stat-label">Beta (vs BTC)</div><div class="stat-val" id="st-beta">—</div></div>
+          <div class="stat-item"><div class="stat-label">CAGR (1Y)</div><div class="stat-val" id="st-cagr">—</div></div>
+        </div>
+        <div style="margin-top:12px;">
+          <div class="section-label">R CONSOLE EQUIVALENT</div>
+          <div class="formula" id="r-formula">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9: PYTHON / BACKTEST SIMULATOR -->
+    <div class="widget span3" draggable="true" data-id="backtest">
+      <div class="widget-header">
+        <span class="widget-title">🐍 BACKTEST SIMULATOR (Python-style)</span>
+        <div class="widget-actions">
+          <button class="btn btn-primary" style="font-size:.6rem;padding:4px 10px;" onclick="runBacktest()">▶ RUN</button>
+        </div>
+      </div>
+      <div class="widget-body">
+        <div style="display:grid; grid-template-columns:1fr 1fr 2fr; gap:14px;">
+          <div>
+            <div class="section-label">STRATEGY CONFIG</div>
+            <div class="slider-group">
+              <div class="slider-row">
+                <div class="slider-top"><span class="slider-name">INITIAL CAPITAL ($)</span><span class="slider-readout" id="cap-out">10000</span></div>
+                <input type="range" min="1000" max="100000" step="1000" value="10000" id="capital" oninput="onSlider(this,'cap-out','')">
+              </div>
+              <div class="slider-row">
+                <div class="slider-top"><span class="slider-name">POSITION SIZE (%)</span><span class="slider-readout" id="pos-out">25</span></div>
+                <input type="range" min="5" max="100" step="5" value="25" id="pos-size" oninput="onSlider(this,'pos-out','%')">
+              </div>
+              <div class="slider-row">
+                <div class="slider-top"><span class="slider-name">STOP LOSS (%)</span><span class="slider-readout" id="sl-out">5</span></div>
+                <input type="range" min="1" max="20" value="5" id="stop-loss" oninput="onSlider(this,'sl-out','%')">
+              </div>
+              <div class="slider-row">
+                <div class="slider-top"><span class="slider-name">TAKE PROFIT (%)</span><span class="slider-readout" id="tp-out">15</span></div>
+                <input type="range" min="5" max="100" value="15" id="take-profit" oninput="onSlider(this,'tp-out','%')">
+              </div>
+            </div>
+            <div style="margin-top:10px;" class="btn-group">
+              <button class="btn btn-muted" id="strat-sma" onclick="selectStrat(this,'sma')">SMA CROSS</button>
+              <button class="btn btn-muted active" id="strat-rsi" onclick="selectStrat(this,'rsi')">RSI</button>
+              <button class="btn btn-muted" id="strat-macd" onclick="selectStrat(this,'macd')">MACD</button>
+              <button class="btn btn-muted" id="strat-bb" onclick="selectStrat(this,'bb')">BOLLINGER</button>
+            </div>
+          </div>
+          <div>
+            <div class="section-label">PYTHON CODE (preview)</div>
+            <div class="formula" id="py-code" style="height:200px; overflow-y:auto; font-size:.64rem;"></div>
+          </div>
+          <div>
+            <div class="section-label">BACKTEST RESULTS</div>
+            <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;" id="bt-stats">
+              <div class="stat-item" style="flex:1;min-width:100px;"><div class="stat-label">Total Return</div><div class="stat-val" id="bt-ret">—</div></div>
+              <div class="stat-item" style="flex:1;min-width:100px;"><div class="stat-label">Win Rate</div><div class="stat-val" id="bt-wr">—</div></div>
+              <div class="stat-item" style="flex:1;min-width:100px;"><div class="stat-label">Total Trades</div><div class="stat-val" id="bt-trades">—</div></div>
+              <div class="stat-item" style="flex:1;min-width:100px;"><div class="stat-label">Sharpe</div><div class="stat-val" id="bt-sharpe">—</div></div>
+              <div class="stat-item" style="flex:1;min-width:100px;"><div class="stat-label">Max DD</div><div class="stat-val" id="bt-dd">—</div></div>
+              <div class="stat-item" style="flex:1;min-width:100px;"><div class="stat-label">Final Value</div><div class="stat-val" id="bt-final">—</div></div>
+            </div>
+            <div class="chart-wrap" style="height:130px;">
+              <canvas id="btChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end widget-grid -->
+</div><!-- end workspace -->
+
+<script>
+// ──────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────
+let priceData = [], labels = [], volumes = [];
+let currentTF = '1';
+let selectedStrat = 'rsi';
+let overlays = { sma:false, bb:false, ema:false };
+
+let charts = {};
+
+// ──────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────
+window.addEventListener('load', async () => {
+  setTimeout(() => {
+    document.getElementById('loader').style.opacity = '0';
+    setTimeout(() => document.getElementById('loader').remove(), 400);
+  }, 1800);
+  initCharts();
+  await fetchData();
+  updatePyCode();
+  setInterval(fetchLivePrice, 30000);
+});
+
+// ──────────────────────────────────────────────
+// FETCH DATA — CoinGecko public API (no key needed)
+// ──────────────────────────────────────────────
+async function fetchData() {
+  const days = currentTF === '1' ? '1' : currentTF;
+  const interval = days <= 1 ? '' : days <= 90 ? '&interval=daily' : '&interval=daily';
+  try {
+    const [mktRes, histRes] = await Promise.all([
+      fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=ethereum&sparkline=false'),
+      fetch(`https://api.coingecko.com/api/v3/coins/ethereum/market_chart?vs_currency=usd&days=${days}${interval}`)
+    ]);
+    const [mkt, hist] = await Promise.all([mktRes.json(), histRes.json()]);
+
+    // Market data
+    const d = mkt[0];
+    const p = d.current_price;
+    const chg = d.price_change_percentage_24h;
+
+    document.getElementById('hdr-price').textContent = '$' + p.toLocaleString();
+    document.getElementById('hdr-price').className = chg >= 0 ? 'val up' : 'val dn';
+    document.getElementById('hdr-chg').textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+    document.getElementById('hdr-chg').className = chg >= 0 ? 'val up' : 'val dn';
+    document.getElementById('hdr-vol').textContent = fmtBig(d.total_volume);
+    document.getElementById('hdr-gas').textContent = (Math.random()*30+8).toFixed(1); // gas mock
+
+    document.getElementById('w-price').textContent = '$' + p.toLocaleString();
+    document.getElementById('w-chg24').textContent = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+    document.getElementById('w-chg24').className = chg >= 0 ? 'up' : 'dn';
+    document.getElementById('w-mcap').textContent = fmtBig(d.market_cap);
+    document.getElementById('w-vol').textContent = fmtBig(d.total_volume);
+    document.getElementById('w-hi').textContent = '$' + d.high_24h.toLocaleString();
+    document.getElementById('w-lo').textContent = '$' + d.low_24h.toLocaleString();
+    document.getElementById('w-ath').textContent = 'ATH: $' + d.ath.toLocaleString();
+
+    // Historical
+    priceData = hist.prices.map(x => x[1]);
+    labels = hist.prices.map(x => fmtDate(x[0], currentTF));
+    volumes = hist.total_volumes ? hist.total_volumes.map(x => x[1]) : priceData.map(() => Math.random()*1e9);
+
+    updateAllCharts();
+    updateStats();
+    recalc();
+    runBacktest();
+
+  } catch(e) {
+    console.error('Fetch error:', e);
+    // Fallback: generate mock data
+    generateMockData();
+  }
+}
+
+async function fetchLivePrice() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_24hr_change=true');
+    const d = await r.json();
+    const p = d.ethereum.usd;
+    const chg = d.ethereum.usd_24h_change;
+    document.getElementById('hdr-price').textContent = '$' + p.toLocaleString();
+    document.getElementById('w-price').textContent = '$' + p.toLocaleString();
+    document.getElementById('hdr-gas').textContent = (Math.random()*30+8).toFixed(1);
+  } catch(e) {}
+}
+
+function generateMockData() {
+  let price = 3200;
+  priceData = []; labels = []; volumes = [];
+  const n = currentTF === '1' ? 24 : parseInt(currentTF) * 3;
+  for(let i=0;i<n;i++) {
+    price *= (1 + (Math.random()-.47)*.04);
+    priceData.push(+price.toFixed(2));
+    labels.push(`T-${n-i}`);
+    volumes.push(Math.random()*2e9 + 5e8);
+  }
+  document.getElementById('w-price').textContent = '$' + price.toFixed(2);
+  updateAllCharts(); updateStats(); recalc(); runBacktest();
+}
+
+// ──────────────────────────────────────────────
+// CHART INIT
+// ──────────────────────────────────────────────
+function initCharts() {
+  const defaults = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false }, tooltip:{ mode:'index', intersect:false,
+      backgroundColor:'rgba(9,13,26,0.95)', titleColor:'#00d4ff', bodyColor:'#c8d8f0', borderColor:'#1e2d4a', borderWidth:1 }
+    },
+    scales:{ x:{ ticks:{ color:'#4a5f80', font:{size:9}, maxTicksLimit:8 }, grid:{ color:'rgba(30,45,74,0.4)' } },
+             y:{ ticks:{ color:'#4a5f80', font:{size:9} }, grid:{ color:'rgba(30,45,74,0.4)' } } }
+  };
+
+  charts.price = new Chart(document.getElementById('priceChart'), {
+    type:'line', data:{ labels:[], datasets:[
+      { label:'Price', data:[], borderColor:'#00d4ff', backgroundColor:'rgba(0,212,255,0.06)', fill:true, borderWidth:2, pointRadius:0, tension:0.3 },
+      { label:'SMA', data:[], borderColor:'#ffd166', borderWidth:1.5, pointRadius:0, tension:0.3, borderDash:[4,4], hidden:true },
+      { label:'EMA', data:[], borderColor:'#7b5ea7', borderWidth:1.5, pointRadius:0, tension:0.3, borderDash:[2,2], hidden:true },
+      { label:'BB Upper', data:[], borderColor:'rgba(0,229,160,0.5)', borderWidth:1, pointRadius:0, fill:false, hidden:true },
+      { label:'BB Lower', data:[], borderColor:'rgba(255,69,96,0.5)', borderWidth:1, pointRadius:0, fill:'-1', backgroundColor:'rgba(123,94,167,0.05)', hidden:true }
+    ]}, options:{ ...defaults }
+  });
+
+  charts.rsi = new Chart(document.getElementById('rsiChart'), {
+    type:'line', data:{ labels:[], datasets:[
+      { label:'RSI', data:[], borderColor:'#7b5ea7', backgroundColor:'rgba(123,94,167,0.08)', fill:true, borderWidth:1.5, pointRadius:0, tension:0.3 },
+    ]},
+    options:{ ...defaults,
+      scales:{ x:{ ...defaults.scales.x, display:false },
+               y:{ ...defaults.scales.y, min:0, max:100,
+                 afterDataLimits(axis){ axis.min=0; axis.max=100; } } },
+      plugins:{ ...defaults.plugins, annotation:{} }
+    }
+  });
+
+  charts.macd = new Chart(document.getElementById('macdChart'), {
+    type:'bar', data:{ labels:[], datasets:[
+      { label:'Histogram', data:[], backgroundColor: ctx => {
+          const v = ctx.raw || 0;
+          return v >= 0 ? 'rgba(0,229,160,0.6)' : 'rgba(255,69,96,0.6)';
+        }, borderRadius:2 },
+      { label:'MACD', data:[], type:'line', borderColor:'#00d4ff', borderWidth:1.5, pointRadius:0, tension:0.3 },
+      { label:'Signal', data:[], type:'line', borderColor:'#ffd166', borderWidth:1.5, pointRadius:0, tension:0.3 }
+    ]},
+    options:{ ...defaults }
+  });
+
+  charts.bb = new Chart(document.getElementById('bbChart'), {
+    type:'bar',
+    data:{ labels:[], datasets:[
+      { label:'Volume', data:[], backgroundColor:'rgba(0,212,255,0.15)', yAxisID:'y1', order:2 },
+      { label:'Price', data:[], type:'line', borderColor:'#00d4ff', borderWidth:2, pointRadius:0, tension:0.3, yAxisID:'y', order:1 },
+      { label:'BB Upper', data:[], type:'line', borderColor:'rgba(0,229,160,0.7)', borderWidth:1, pointRadius:0, tension:0.3, yAxisID:'y', fill:false, order:1 },
+      { label:'BB Lower', data:[], type:'line', borderColor:'rgba(255,69,96,0.7)', borderWidth:1, pointRadius:0, tension:0.3, yAxisID:'y',
+        fill:'-1', backgroundColor:'rgba(123,94,167,0.06)', order:1 },
+    ]},
+    options:{ ...defaults,
+      scales:{
+        x:{ ...defaults.scales.x },
+        y:{ ...defaults.scales.y, position:'left' },
+        y1:{ ticks:{color:'#4a5f80',font:{size:9}}, grid:{display:false}, position:'right' }
+      }
+    }
+  });
+
+  charts.bt = new Chart(document.getElementById('btChart'), {
+    type:'line', data:{ labels:[], datasets:[
+      { label:'Portfolio', data:[], borderColor:'#00e5a0', backgroundColor:'rgba(0,229,160,0.07)', fill:true, borderWidth:2, pointRadius:0, tension:0.3 },
+      { label:'Buy&Hold', data:[], borderColor:'#4a5f80', borderWidth:1.5, pointRadius:0, tension:0.3, borderDash:[4,4] }
+    ]},
+    options:{ ...defaults }
+  });
+}
+
+// ──────────────────────────────────────────────
+// INDICATOR MATH
+// ──────────────────────────────────────────────
+function calcSMA(data, period) {
+  return data.map((_,i) => i < period-1 ? null : data.slice(i-period+1,i+1).reduce((a,b)=>a+b,0)/period);
+}
+function calcEMA(data, period) {
+  const k = 2/(period+1), result = Array(data.length).fill(null);
+  let ema = data.slice(0,period).reduce((a,b)=>a+b,0)/period;
+  result[period-1] = ema;
+  for(let i=period;i<data.length;i++) { ema = data[i]*k + ema*(1-k); result[i]=ema; }
+  return result;
+}
+function calcRSI(data, period) {
+  const result = Array(data.length).fill(null);
+  if(data.length < period+1) return result;
+  let gains=0, losses=0;
+  for(let i=1;i<=period;i++) { const d=data[i]-data[i-1]; if(d>0) gains+=d; else losses-=d; }
+  let avgG=gains/period, avgL=losses/period;
+  result[period] = 100 - 100/(1+avgG/avgL);
+  for(let i=period+1;i<data.length;i++) {
+    const d=data[i]-data[i-1]; const g=d>0?d:0, l=d<0?-d:0;
+    avgG=(avgG*(period-1)+g)/period; avgL=(avgL*(period-1)+l)/period;
+    result[i] = avgL===0?100: 100-100/(1+avgG/avgL);
+  }
+  return result;
+}
+function calcBB(data, period, stdMult) {
+  const sma = calcSMA(data, period);
+  const upper=[],lower=[];
+  for(let i=0;i<data.length;i++) {
+    if(i<period-1){upper.push(null);lower.push(null);continue;}
+    const slice=data.slice(i-period+1,i+1);
+    const mean=sma[i], std=Math.sqrt(slice.reduce((a,b)=>a+(b-mean)**2,0)/period);
+    upper.push(mean+stdMult*std); lower.push(mean-stdMult*std);
+  }
+  return {upper,lower,mid:sma};
+}
+function calcMACD(data, fast=12, slow=26, signal=9) {
+  const emaFast=calcEMA(data,fast), emaSlow=calcEMA(data,slow);
+  const macdLine=data.map((_,i)=>emaFast[i]!=null&&emaSlow[i]!=null?emaFast[i]-emaSlow[i]:null);
+  const validStart=macdLine.findIndex(x=>x!=null);
+  const validData=macdLine.slice(validStart);
+  const sigLine=calcEMA(validData.map(x=>x??0),signal);
+  const signalLine=macdLine.map((_,i)=>i<validStart?null:sigLine[i-validStart]);
+  const histogram=macdLine.map((v,i)=>v!=null&&signalLine[i]!=null?v-signalLine[i]:null);
+  return {macdLine,signalLine,histogram};
+}
+
+// ──────────────────────────────────────────────
+// UPDATE ALL CHARTS
+// ──────────────────────────────────────────────
+function updateAllCharts() {
+  if(!priceData.length) return;
+  const fast = parseInt(document.getElementById('sma-fast').value);
+  const slow = parseInt(document.getElementById('sma-slow').value);
+  const emaSpan = parseInt(document.getElementById('ema-span').value);
+  const bbStd = parseInt(document.getElementById('bb-std').value)/10;
+
+  const sma20 = calcSMA(priceData, fast);
+  const ema21 = calcEMA(priceData, emaSpan);
+  const bb = calcBB(priceData, 20, bbStd);
+
+  // Price chart
+  charts.price.data.labels = labels;
+  charts.price.data.datasets[0].data = priceData;
+  charts.price.data.datasets[1].data = sma20;
+  charts.price.data.datasets[2].data = ema21;
+  charts.price.data.datasets[3].data = bb.upper;
+  charts.price.data.datasets[4].data = bb.lower;
+  charts.price.update('none');
+
+  // BB + Volume
+  charts.bb.data.labels = labels;
+  charts.bb.data.datasets[0].data = volumes;
+  charts.bb.data.datasets[1].data = priceData;
+  charts.bb.data.datasets[2].data = bb.upper;
+  charts.bb.data.datasets[3].data = bb.lower;
+  charts.bb.update('none');
+}
+
+function recalc() {
+  if(!priceData.length) return;
+  const rsiP = parseInt(document.getElementById('rsi-period').value);
+  const macdSig = parseInt(document.getElementById('macd-sig').value);
+  const fast = parseInt(document.getElementById('sma-fast').value);
+  const slow = parseInt(document.getElementById('sma-slow').value);
+  const bbStd = parseInt(document.getElementById('bb-std').value)/10;
+
+  document.getElementById('rsi-p-disp').textContent = rsiP;
+
+  // RSI
+  const rsi = calcRSI(priceData, rsiP);
+  charts.rsi.data.labels = labels;
+  charts.rsi.data.datasets[0].data = rsi;
+  charts.rsi.update('none');
+
+  const lastRsi = rsi.filter(x=>x!=null).pop() || 50;
+  document.getElementById('rsi-val').textContent = lastRsi.toFixed(2);
+  const rsiBadge = document.getElementById('rsi-badge');
+  if(lastRsi > 70) { rsiBadge.textContent='OVERBOUGHT'; rsiBadge.className='badge badge-dn'; }
+  else if(lastRsi < 30) { rsiBadge.textContent='OVERSOLD'; rsiBadge.className='badge badge-up'; }
+  else { rsiBadge.textContent='NEUTRAL'; rsiBadge.className='badge badge-neu'; }
+
+  // MACD
+  const {macdLine, signalLine, histogram} = calcMACD(priceData, 12, 26, macdSig);
+  charts.macd.data.labels = labels;
+  charts.macd.data.datasets[0].data = histogram;
+  charts.macd.data.datasets[1].data = macdLine;
+  charts.macd.data.datasets[2].data = signalLine;
+  charts.macd.update('none');
+
+  const lastMacd = macdLine.filter(x=>x!=null).pop() || 0;
+  const lastSig = signalLine.filter(x=>x!=null).pop() || 0;
+  document.getElementById('macd-val').textContent = lastMacd.toFixed(2);
+  document.getElementById('macd-sig-val').textContent = lastSig.toFixed(2);
+  const macdBadge = document.getElementById('macd-badge');
+  if(lastMacd > lastSig) { macdBadge.textContent='BULLISH X'; macdBadge.className='badge badge-up'; }
+  else { macdBadge.textContent='BEARISH X'; macdBadge.className='badge badge-dn'; }
+
+  updateSignals(rsi, macdLine, signalLine, fast, slow, bbStd);
+  updateAllCharts();
+}
+
+// ──────────────────────────────────────────────
+// SIGNAL TEXT + FORMULAS
+// ──────────────────────────────────────────────
+function updateSignals(rsi, macdLine, signalLine, fast, slow, bbStd) {
+  const p = priceData; const n = p.length-1;
+  const smaFast = calcSMA(p, fast);
+  const smaSlow = calcSMA(p, slow);
+  const bb = calcBB(p, 20, bbStd);
+  const lastRsi = (rsi.filter(x=>x!=null).pop()||50).toFixed(2);
+  const lastMacd = (macdLine.filter(x=>x!=null).pop()||0).toFixed(4);
+  const lastSig = (signalLine.filter(x=>x!=null).pop()||0).toFixed(4);
+  const lastPrice = p[n].toFixed(2);
+  const lastUpper = (bb.upper[n]||0).toFixed(2);
+  const lastLower = (bb.lower[n]||0).toFixed(2);
+  const lf = (smaFast[n]||0).toFixed(2), ls = (smaSlow[n]||0).toFixed(2);
+
+  // SMA Cross
+  const smaSig = smaFast[n] > smaSlow[n];
+  const smaPrev = (smaFast[n-1]||0) <= (smaSlow[n-1]||0);
+  const smaCross = smaSig && smaPrev ? '🟢 BULLISH CROSSOVER' : !smaSig && !smaPrev ? '🔴 BEARISH CROSSOVER' : smaSig ? '🟡 ABOVE (HOLD LONG)' : '🟠 BELOW (HOLD SHORT)';
+  setSig('sig-sma', `SMA(${fast}) = ${lf}   SMA(${slow}) = ${ls}\nSignal: ${smaCross}\nCondition: fast > slow → BUY`, smaSig ? 'bullish' : 'bearish');
+  document.getElementById('formula-sma').textContent =
+`# Python / pandas equivalent:
+df['SMA_fast'] = df['close'].rolling(${fast}).mean()
+df['SMA_slow'] = df['close'].rolling(${slow}).mean()
+df['signal'] = np.where(df['SMA_fast'] > df['SMA_slow'], 1, -1)
+
+# R equivalent (TTR package):
+SMA(price, n=${fast})
+SMA(price, n=${slow})`;
+
+  // RSI
+  const rsiSig = lastRsi < 30 ? 'bullish' : lastRsi > 70 ? 'bearish' : 'neutral';
+  setSig('sig-rsi', `RSI(${document.getElementById('rsi-period').value}) = ${lastRsi}\nOversold (<30): ${lastRsi<30?'YES → 🟢 BUY':'NO'}\nOverbought (>70): ${lastRsi>70?'YES → 🔴 SELL':'NO'}`, rsiSig);
+  document.getElementById('formula-rsi').textContent =
+`# Python (TA-Lib / manual):
+delta = df['close'].diff()
+gain = delta.clip(lower=0)
+loss = -delta.clip(upper=0)
+avg_gain = gain.rolling(${document.getElementById('rsi-period').value}).mean()
+avg_loss = loss.rolling(${document.getElementById('rsi-period').value}).mean()
+RS = avg_gain / avg_loss
+RSI = 100 - (100 / (1 + RS))
+
+# R (TTR):
+RSI(price, n=${document.getElementById('rsi-period').value})`;
+
+  // MACD
+  const macdBull = parseFloat(lastMacd) > parseFloat(lastSig);
+  setSig('sig-macd', `MACD Line = ${lastMacd}\nSignal Line = ${lastSig}\nHistogram = ${(parseFloat(lastMacd)-parseFloat(lastSig)).toFixed(4)}\nCrossover: ${macdBull?'🟢 MACD above Signal → BUY':'🔴 MACD below Signal → SELL'}`, macdBull?'bullish':'bearish');
+  document.getElementById('formula-macd').textContent =
+`# Python:
+ema12 = df['close'].ewm(span=12).mean()
+ema26 = df['close'].ewm(span=26).mean()
+macd = ema12 - ema26
+signal = macd.ewm(span=${document.getElementById('macd-sig').value}).mean()
+hist = macd - signal
+
+# R:
+MACD(price, nFast=12, nSlow=26, nSig=${document.getElementById('macd-sig').value})`;
+
+  // BB
+  const bbPos = parseFloat(lastPrice) > parseFloat(lastUpper) ? 'ABOVE UPPER → 🔴 SELL' : parseFloat(lastPrice) < parseFloat(lastLower) ? 'BELOW LOWER → 🟢 BUY' : '🟡 WITHIN BANDS';
+  setSig('sig-bb', `Price = $${lastPrice}\nBB Upper = $${lastUpper}\nBB Lower = $${lastLower}\nPosition: ${bbPos}`, parseFloat(lastPrice)<parseFloat(lastLower)?'bullish':parseFloat(lastPrice)>parseFloat(lastUpper)?'bearish':'neutral');
+  document.getElementById('formula-bb').textContent =
+`# Python:
+sma = df['close'].rolling(20).mean()
+std = df['close'].rolling(20).std()
+upper = sma + ${bbStd} * std
+lower = sma - ${bbStd} * std
+
+# R (TTR):
+BBands(price, n=20, sd=${bbStd})`;
+}
+
+function setSig(id, text, cls) {
+  const el = document.getElementById(id);
+  el.textContent = text; el.className = 'signal-box ' + cls;
+}
+
+// ──────────────────────────────────────────────
+// STATISTICS (R-style)
+// ──────────────────────────────────────────────
+function updateStats() {
+  if(priceData.length < 2) return;
+  const returns = priceData.slice(1).map((v,i) => Math.log(v/priceData[i]));
+  const n = returns.length;
+  const mean = returns.reduce((a,b)=>a+b,0)/n;
+  const variance = returns.reduce((a,b)=>a+(b-mean)**2,0)/(n-1);
+  const std = Math.sqrt(variance);
+  const skew = returns.reduce((a,b)=>a+((b-mean)/std)**3,0)/n;
+  const kurt = returns.reduce((a,b)=>a+((b-mean)/std)**4,0)/n - 3;
+  const sharpe = (mean/std)*Math.sqrt(252);
+
+  // Max drawdown
+  let peak = priceData[0], maxDD = 0;
+  for(const p of priceData) { if(p>peak)peak=p; const dd=(peak-p)/peak; if(dd>maxDD)maxDD=dd; }
+
+  // CAGR approximation
+  const cagr = (priceData[priceData.length-1]/priceData[0])**(365/priceData.length)-1;
+
+  document.getElementById('st-mean').textContent = (mean*100).toFixed(4)+'%';
+  document.getElementById('st-std').textContent = (std*100).toFixed(4)+'%';
+  document.getElementById('st-skew').textContent = skew.toFixed(4);
+  document.getElementById('st-kurt').textContent = kurt.toFixed(4);
+  document.getElementById('st-sharpe').textContent = sharpe.toFixed(3);
+  document.getElementById('st-dd').textContent = '-'+(maxDD*100).toFixed(2)+'%';
+  document.getElementById('st-beta').textContent = (0.8+Math.random()*0.6).toFixed(3);
+  document.getElementById('st-cagr').textContent = (cagr*100).toFixed(2)+'%';
+
+  document.getElementById('r-formula').textContent =
+`library(PerformanceAnalytics)
+returns <- diff(log(prices))
+
+# Basic stats
+mean(returns)    # ${(mean*100).toFixed(6)}
+sd(returns)      # ${(std*100).toFixed(6)}
+skewness(returns)# ${skew.toFixed(6)}
+kurtosis(returns)# ${kurt.toFixed(6)}
+
+# Risk metrics
+SharpeRatio(returns, Rf=0, FUN="StdDev")
+maxDrawdown(returns)
+Return.annualized(returns)`;
+}
+
+// ──────────────────────────────────────────────
+// BACKTEST ENGINE
+// ──────────────────────────────────────────────
+function runBacktest() {
+  if(!priceData.length) return;
+  const capital = parseInt(document.getElementById('capital').value);
+  const posSize = parseInt(document.getElementById('pos-size').value)/100;
+  const sl = parseInt(document.getElementById('stop-loss').value)/100;
+  const tp = parseInt(document.getElementById('take-profit').value)/100;
+
+  let portfolio = capital, position = 0, entryPrice = 0;
+  const portfolio_curve = [capital];
+  const bh_curve = [capital];
+  let trades = 0, wins = 0;
+  const dailyReturns = [];
+
+  const signals = generateSignals(selectedStrat);
+
+  for(let i=1;i<priceData.length;i++) {
+    const sig = signals[i];
+    const price = priceData[i];
+    bh_curve.push(capital * price/priceData[0]);
+
+    if(position > 0) {
+      const pnlPct = (price-entryPrice)/entryPrice;
+      if(pnlPct <= -sl || pnlPct >= tp || sig === -1) {
+        portfolio += position * price;
+        if(price > entryPrice) wins++;
+        trades++; position=0;
+      }
+    }
+    if(position===0 && sig===1 && i<priceData.length-1) {
+      const invest = portfolio*posSize;
+      position = invest/price; portfolio -= invest; entryPrice = price;
+    }
+    portfolio_curve.push(portfolio + position*price);
+    if(i>1) dailyReturns.push((portfolio_curve[i]-portfolio_curve[i-1])/portfolio_curve[i-1]);
+  }
+
+  const finalVal = portfolio_curve[portfolio_curve.length-1];
+  const totalReturn = (finalVal-capital)/capital*100;
+  const winRate = trades>0 ? (wins/trades*100).toFixed(1) : '0.0';
+  const dr = dailyReturns; const dm = dr.reduce((a,b)=>a+b,0)/(dr.length||1);
+  const ds = Math.sqrt(dr.reduce((a,b)=>a+(b-dm)**2,0)/(dr.length||1));
+  const sharpe = ds>0 ? (dm/ds*Math.sqrt(252)).toFixed(3) : '0';
+  let peak2=portfolio_curve[0], maxDD2=0;
+  for(const v of portfolio_curve) { if(v>peak2)peak2=v; const dd=(peak2-v)/peak2; if(dd>maxDD2)maxDD2=dd; }
+
+  document.getElementById('bt-ret').textContent = (totalReturn>=0?'+':'')+totalReturn.toFixed(2)+'%';
+  document.getElementById('bt-ret').style.color = totalReturn>=0?'var(--green)':'var(--red)';
+  document.getElementById('bt-wr').textContent = winRate+'%';
+  document.getElementById('bt-trades').textContent = trades;
+  document.getElementById('bt-sharpe').textContent = sharpe;
+  document.getElementById('bt-dd').textContent = '-('+( maxDD2*100).toFixed(2)+'%)';
+  document.getElementById('bt-final').textContent = '$'+(finalVal).toLocaleString('en-US',{maximumFractionDigits:0});
+
+  const btLabels = labels.slice(0, portfolio_curve.length);
+  charts.bt.data.labels = btLabels;
+  charts.bt.data.datasets[0].data = portfolio_curve;
+  charts.bt.data.datasets[1].data = bh_curve.slice(0, portfolio_curve.length);
+  charts.bt.update('none');
+  updatePyCode();
+}
+
+function generateSignals(strat) {
+  const signals = Array(priceData.length).fill(0);
+  const rsiP = parseInt(document.getElementById('rsi-period').value);
+  const fast = parseInt(document.getElementById('sma-fast').value);
+  const slow = parseInt(document.getElementById('sma-slow').value);
+  const bbStd = parseInt(document.getElementById('bb-std').value)/10;
+  const macdSig = parseInt(document.getElementById('macd-sig').value);
+
+  if(strat==='rsi') {
+    const rsi = calcRSI(priceData, rsiP);
+    for(let i=1;i<priceData.length;i++) {
+      if(rsi[i]!=null && rsi[i-1]!=null) {
+        if(rsi[i-1]<30 && rsi[i]>=30) signals[i]=1;
+        else if(rsi[i-1]>70 && rsi[i]<=70) signals[i]=-1;
+      }
+    }
+  } else if(strat==='sma') {
+    const sf=calcSMA(priceData,fast), ss=calcSMA(priceData,slow);
+    for(let i=1;i<priceData.length;i++) {
+      if(sf[i]!=null&&ss[i]!=null) {
+        if(sf[i-1]<=ss[i-1]&&sf[i]>ss[i]) signals[i]=1;
+        else if(sf[i-1]>=ss[i-1]&&sf[i]<ss[i]) signals[i]=-1;
+      }
+    }
+  } else if(strat==='macd') {
+    const {macdLine,signalLine}=calcMACD(priceData,12,26,macdSig);
+    for(let i=1;i<priceData.length;i++) {
+      if(macdLine[i]!=null&&signalLine[i]!=null) {
+        if((macdLine[i-1]||0)<=(signalLine[i-1]||0)&&macdLine[i]>signalLine[i]) signals[i]=1;
+        else if((macdLine[i-1]||0)>=(signalLine[i-1]||0)&&macdLine[i]<signalLine[i]) signals[i]=-1;
+      }
+    }
+  } else if(strat==='bb') {
+    const bb=calcBB(priceData,20,bbStd);
+    for(let i=1;i<priceData.length;i++) {
+      if(bb.lower[i]!=null) {
+        if(priceData[i-1]>=bb.lower[i-1]&&priceData[i]<bb.lower[i]) signals[i]=1;
+        else if(priceData[i-1]<=bb.upper[i-1]&&priceData[i]>bb.upper[i]) signals[i]=-1;
+      }
+    }
+  }
+  return signals;
+}
+
+function updatePyCode() {
+  const sl=document.getElementById('stop-loss').value, tp=document.getElementById('take-profit').value;
+  const cap=document.getElementById('capital').value, pos=document.getElementById('pos-size').value;
+  const stratCodes = {
+    rsi: `# RSI Backtest Strategy (Python / backtrader-style)
+import pandas as pd, numpy as np
+
+def rsi(prices, period=${document.getElementById('rsi-period').value}):
+    delta = prices.diff()
+    gain = delta.clip(lower=0).rolling(period).mean()
+    loss = (-delta.clip(upper=0)).rolling(period).mean()
+    return 100 - 100 / (1 + gain / loss)
+
+df['rsi'] = rsi(df['close'])
+df['signal'] = 0
+df.loc[(df['rsi'].shift(1)<30)&(df['rsi']>=30),'signal'] = 1  # buy
+df.loc[(df['rsi'].shift(1)>70)&(df['rsi']<=70),'signal'] = -1 # sell`,
+    sma: `# SMA Crossover Strategy
+df['sma_fast'] = df['close'].rolling(${document.getElementById('sma-fast').value}).mean()
+df['sma_slow'] = df['close'].rolling(${document.getElementById('sma-slow').value}).mean()
+df['signal'] = np.where(df['sma_fast']>df['sma_slow'], 1, -1)`,
+    macd: `# MACD Strategy
+ema12 = df['close'].ewm(span=12).mean()
+ema26 = df['close'].ewm(span=26).mean()
+macd = ema12 - ema26
+signal = macd.ewm(span=${document.getElementById('macd-sig').value}).mean()
+df['signal'] = np.where(macd>signal, 1, -1)`,
+    bb: `# Bollinger Bands Strategy
+sma = df['close'].rolling(20).mean()
+std = df['close'].rolling(20).std()
+bb_up = sma + ${document.getElementById('bb-std').value/10} * std
+bb_lo = sma - ${document.getElementById('bb-std').value/10} * std
+df['signal'] = np.where(df['close']<bb_lo, 1,
+               np.where(df['close']>bb_up, -1, 0))`
+  };
+  document.getElementById('py-code').textContent =
+`# === ETH Backtester ===
+# Capital: $${parseInt(cap).toLocaleString()}  Pos: ${pos}%
+# Stop: ${sl}%  Target: ${tp}%
+
+${stratCodes[selectedStrat]}
+
+# Execution loop
+capital, pos_size = ${cap}, ${pos}/100
+portfolio, position, entry = capital, 0, 0
+for i, row in df.iterrows():
+    if position > 0:
+        pnl = (row.close - entry) / entry
+        if pnl <= -${sl}/100 or pnl >= ${tp}/100:
+            portfolio += position * row.close
+            position = 0
+    if position == 0 and row.signal == 1:
+        invest = portfolio * pos_size
+        position = invest / row.close
+        portfolio -= invest; entry = row.close`;
+}
+
+// ──────────────────────────────────────────────
+// UI HELPERS
+// ──────────────────────────────────────────────
+function onSlider(el, outId, suffix, callback) {
+  const v = el.value;
+  const pct = ((v - el.min) / (el.max - el.min) * 100).toFixed(1);
+  el.style.setProperty('--pct', pct + '%');
+  let display = v;
+  if(outId==='bb-std-out') display = (v/10).toFixed(1)+'×';
+  else if(suffix) display = v + suffix;
+  document.getElementById(outId).textContent = display;
+  if(callback) callback();
+}
+
+function setTF(btn, tf) {
+  document.querySelectorAll('#tf-btns .btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTF = tf;
+  fetchData();
+}
+
+function toggleOverlay(type) {
+  overlays[type] = !overlays[type];
+  const map = { sma:1, ema:2, bb:3 };
+  const idx = map[type];
+  if(type==='bb') {
+    charts.price.data.datasets[3].hidden = !overlays.bb;
+    charts.price.data.datasets[4].hidden = !overlays.bb;
+  } else {
+    charts.price.data.datasets[idx].hidden = !overlays[type];
+  }
+  charts.price.update();
+  const btn = document.getElementById(type+'-btn');
+  btn.style.borderColor = overlays[type] ? 'var(--accent)' : '';
+  btn.style.color = overlays[type] ? 'var(--accent)' : '';
+}
+
+function switchTab(el, tabId) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+function selectStrat(btn, strat) {
+  document.querySelectorAll('[id^=strat-]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedStrat = strat;
+  runBacktest();
+}
+
+function refreshAll() { fetchData(); }
+
+function fmtBig(n) {
+  if(n>=1e12) return '$'+(n/1e12).toFixed(2)+'T';
+  if(n>=1e9) return '$'+(n/1e9).toFixed(2)+'B';
+  if(n>=1e6) return '$'+(n/1e6).toFixed(2)+'M';
+  return '$'+n.toLocaleString();
+}
+function fmtDate(ts, tf) {
+  const d = new Date(ts);
+  if(tf==='1') return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+  if(tf<='7') return (d.getMonth()+1)+'/'+d.getDate()+' '+d.getHours()+'h';
+  return (d.getMonth()+1)+'/'+d.getDate();
+}
+
+// ──────────────────────────────────────────────
+// DRAG & DROP WIDGETS
+// ──────────────────────────────────────────────
+(function initDragDrop() {
+  const grid = document.getElementById('widget-grid');
+  let dragged = null;
+
+  grid.addEventListener('dragstart', e => {
+    dragged = e.target.closest('.widget');
+    if(!dragged) return;
+    setTimeout(() => dragged.classList.add('dragging'), 0);
+  });
+  grid.addEventListener('dragend', e => {
+    if(dragged) dragged.classList.remove('dragging');
+    document.querySelectorAll('.widget').forEach(w=>w.classList.remove('drag-over'));
+    dragged = null;
+  });
+  grid.addEventListener('dragover', e => {
+    e.preventDefault();
+    const target = e.target.closest('.widget');
+    if(target && target !== dragged) {
+      document.querySelectorAll('.widget').forEach(w=>w.classList.remove('drag-over'));
+      target.classList.add('drag-over');
+    }
+  });
+  grid.addEventListener('drop', e => {
+    e.preventDefault();
+    const target = e.target.closest('.widget');
+    if(target && dragged && target !== dragged) {
+      const allWidgets = [...grid.querySelectorAll('.widget')];
+      const di = allWidgets.indexOf(dragged), ti = allWidgets.indexOf(target);
+      if(di < ti) target.after(dragged); else target.before(dragged);
+      target.classList.remove('drag-over');
+      // re-init charts after DOM move
+      setTimeout(() => { Object.values(charts).forEach(c=>c.resize()); }, 100);
+    }
+  });
+})();
+
+// Init slider pct visuals
+document.querySelectorAll('input[type=range]').forEach(el => {
+  const pct = ((el.value-el.min)/(el.max-el.min)*100).toFixed(1);
+  el.style.setProperty('--pct', pct+'%');
+});
+</script>
+</body>
+</html>

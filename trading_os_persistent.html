@@ -1,0 +1,604 @@
+
+<style>
+:root{--a:#e8ff47;--g:#3dffa0;--r:#ff4f6d;--y:#ffb830;--pu:#b47fff;--fm:'JetBrains Mono',monospace}
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@700;800&display=swap');
+.tos{font-family:var(--font-sans);padding:0.5rem 0 2rem}
+.nav{display:flex;gap:3px;margin-bottom:1.5rem;background:var(--color-background-secondary);padding:3px;border-radius:var(--border-radius-md);overflow-x:auto}
+.nav button{flex:1;min-width:80px;padding:7px 8px;font-size:12px;background:transparent;border:none;border-radius:6px;cursor:pointer;color:var(--color-text-secondary);font-family:var(--font-sans);white-space:nowrap}
+.nav button.on{background:var(--color-background-primary);color:var(--color-text-primary);font-weight:500;border:0.5px solid var(--color-border-tertiary)}
+.tab{display:none}.tab.on{display:block}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;margin-bottom:1rem}
+.mono{font-family:var(--fm)}
+.label{font-size:11px;color:var(--color-text-secondary);font-family:var(--fm);letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:5px}
+.big{font-size:24px;font-weight:500;font-family:var(--fm)}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-family:var(--fm);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.bw{background:#EAF3DE;color:#27500A}.bl{background:#FCEBEB;color:#791F1F}.bo{background:#E6F1FB;color:#0C447C}.bs{background:var(--color-background-secondary);color:var(--color-text-secondary)}.by{background:#FAEEDA;color:#633806}.bg2{background:#E1F5EE;color:#085041}.br2{background:#FAECE7;color:#712B13}
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.mcard{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px}
+input,select,textarea{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:7px 10px;color:var(--color-text-primary);font-family:var(--font-sans);font-size:13px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--a);outline-offset:-1px}
+.field{margin-bottom:10px}
+.field .label{margin-bottom:4px}
+.btn{padding:7px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);font-size:13px;cursor:pointer;font-family:var(--font-sans)}
+.btn:hover{border-color:var(--a)}
+.btn-a{background:var(--a);color:#0a0a0f;border-color:var(--a);font-weight:600}
+.btn-g{border-color:var(--g);color:#27500A}
+.btn-r{border-color:var(--r);color:#791F1F}
+.btn-sm{padding:4px 10px;font-size:12px}
+.flex{display:flex;align-items:center}
+.between{justify-content:space-between}
+.gap8{gap:8px}.gap12{gap:12px}
+.muted{color:var(--color-text-secondary)}
+.divider{height:0.5px;background:var(--color-border-tertiary);margin:14px 0}
+input[type=range]{padding:0;accent-color:var(--a)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{font-family:var(--fm);font-size:10px;color:var(--color-text-secondary);letter-spacing:.06em;text-transform:uppercase;text-align:left;padding:7px 8px;border-bottom:0.5px solid var(--color-border-tertiary)}
+td{padding:8px 8px;border-bottom:0.5px solid var(--color-border-tertiary)}
+tr:last-child td{border-bottom:none}
+.agcard{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:14px;margin-bottom:10px}
+.agcard.long{border-left:3px solid var(--g);border-radius:0 var(--border-radius-lg) var(--border-radius-lg) 0}
+.agcard.short{border-left:3px solid var(--r);border-radius:0 var(--border-radius-lg) var(--border-radius-lg) 0}
+.heat-track{position:relative;height:8px;border-radius:4px;background:linear-gradient(90deg,#E24B4A 0%,#BA7517 50%,#639922 100%);margin:10px 0 5px}
+.heat-needle{position:absolute;top:-5px;width:4px;height:18px;background:var(--color-text-primary);border-radius:2px;transform:translateX(-50%);transition:left .5s ease}
+.codebox{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:14px;font-family:var(--fm);font-size:11px;color:var(--color-text-secondary);line-height:1.7;overflow-x:auto;white-space:pre}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--color-border-secondary);border-top-color:var(--color-text-primary);border-radius:50%;animation:sp .6s linear infinite;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loc-tabs{display:flex;gap:4px;margin-bottom:14px}
+.lt{flex:1;padding:7px;text-align:center;cursor:pointer;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);font-size:12px;color:var(--color-text-secondary)}
+.lt.on{border-color:var(--a);color:var(--color-text-primary);background:var(--color-background-secondary)}
+.crow{display:flex;justify-content:space-between;padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px}
+.crow:last-child{border-bottom:none}
+.crow .cv{font-family:var(--fm);color:var(--color-text-secondary)}
+.algo-btns{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px}
+.abtn{padding:5px 10px;border-radius:5px;border:0.5px solid var(--color-border-tertiary);cursor:pointer;font-size:11px;color:var(--color-text-secondary);background:transparent;font-family:var(--fm)}
+.abtn.on{border-color:var(--a);color:var(--color-text-primary);background:var(--color-background-secondary)}
+.sparkwrap{display:flex;align-items:flex-end;gap:2px;height:50px;padding-top:6px}
+.spbar{border-radius:2px 2px 0 0;min-width:4px;flex:1}
+.empty{text-align:center;padding:28px;color:var(--color-text-secondary);font-size:13px}
+.driver{display:flex;gap:8px;padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px}
+.driver:last-child{border-bottom:none}
+</style>
+
+<div class="tos">
+  <nav>
+    <button class="on" onclick="sp('money',this)">💰 Money model</button>
+    <button onclick="sp('journal',this)">📓 Journal</button>
+    <button onclick="sp('agents',this)" id="nav-agents">🤖 Agents</button>
+    <button onclick="sp('sentiment',this)">🔥 Sentiment</button>
+    <button onclick="sp('lab',this)">🧪 Lab</button>
+  </nav>
+
+  <!-- MONEY MODEL -->
+  <div id="tab-money" class="tab on">
+    <div class="loc-tabs">
+      <div class="lt on" id="lt-latam" onclick="setLoc('latam')">🌎 LATAM</div>
+      <div class="lt" id="lt-bcn" onclick="setLoc('bcn')">🇪🇸 Barcelona</div>
+      <div class="lt" id="lt-usa" onclick="setLoc('usa')">🇺🇸 USA</div>
+    </div>
+    <div class="g2 gap12" style="margin-bottom:1rem">
+      <div>
+        <div class="card" style="text-align:center;padding:20px">
+          <span class="label">Required account size</span>
+          <div class="big" id="m-acct" style="font-size:28px;color:var(--color-text-primary)">$77,767</div>
+          <div style="font-size:11px;color:var(--color-text-secondary);margin-top:4px;font-family:var(--fm)" id="m-acct-note">at 3% / mo · 25% tax reserve</div>
+        </div>
+        <div class="g2 gap8">
+          <div class="mcard"><span class="label">Gross needed/mo</span><div class="big" id="m-gross" style="font-size:16px;color:#639922">—</div></div>
+          <div class="mcard"><span class="label">Time to LATAM goal</span><div class="big" id="m-time" style="font-size:16px;color:#BA7517">—</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <span class="label" id="loc-name">LATAM (Medellin)</span>
+        <div id="cost-list"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:12px;font-family:var(--fm)">Adjust to see your target account size</div>
+      <div style="margin-bottom:14px">
+        <div class="flex between" style="margin-bottom:5px"><span style="font-size:12px;color:var(--color-text-secondary)">Target net income</span><span class="mono" style="font-size:13px;color:var(--color-text-primary)" id="sv-inc">$1,500</span></div>
+        <input type="range" min="500" max="8000" step="100" value="1500" id="sl-inc" oninput="calcMoney()">
+      </div>
+      <div style="margin-bottom:14px">
+        <div class="flex between" style="margin-bottom:5px"><span style="font-size:12px;color:var(--color-text-secondary)">Expected monthly return</span><span class="mono" style="font-size:13px;color:var(--color-text-primary)" id="sv-ret">3%</span></div>
+        <input type="range" min="1" max="8" step="0.5" value="3" id="sl-ret" oninput="calcMoney()">
+      </div>
+      <div>
+        <div class="flex between" style="margin-bottom:5px"><span style="font-size:12px;color:var(--color-text-secondary)">Monthly capital injection</span><span class="mono" style="font-size:13px;color:var(--color-text-primary)" id="sv-inj">$500</span></div>
+        <input type="range" min="0" max="4000" step="100" value="500" id="sl-inj" oninput="calcMoney()">
+      </div>
+    </div>
+    <div class="card">
+      <span class="label" style="margin-bottom:10px">Path to $5K pocket + $5K reinvest</span>
+      <div id="milestones" style="font-size:12px;color:var(--color-text-secondary);line-height:1.9"></div>
+      <div class="divider"></div>
+      <div id="rec-box" style="font-size:12px;color:var(--color-text-secondary);line-height:1.9"></div>
+    </div>
+  </div>
+
+  <!-- JOURNAL -->
+  <div id="tab-journal" class="tab">
+    <div class="g4" style="margin-bottom:1rem">
+      <div class="mcard"><span class="label">Total</span><div class="big" id="k-tot" style="font-size:18px">0</div></div>
+      <div class="mcard"><span class="label">Win rate</span><div class="big" id="k-wr" style="font-size:18px">—</div></div>
+      <div class="mcard"><span class="label">Avg R:R</span><div class="big" id="k-rr" style="font-size:18px">—</div></div>
+      <div class="mcard"><span class="label">Expectancy</span><div class="big" id="k-exp" style="font-size:18px">—</div></div>
+    </div>
+    <div class="card" style="margin-bottom:1rem">
+      <span class="label" style="margin-bottom:10px">Log trade</span>
+      <div class="g3 gap8">
+        <div class="field"><span class="label">Date</span><input type="date" id="f-date"></div>
+        <div class="field"><span class="label">Pair</span><input type="text" id="f-pair" placeholder="EUR/USD"></div>
+        <div class="field"><span class="label">Direction</span><select id="f-dir"><option>LONG</option><option>SHORT</option></select></div>
+      </div>
+      <div class="g4 gap8">
+        <div class="field"><span class="label">Entry</span><input type="number" id="f-entry" step="0.00001" placeholder="1.0854"></div>
+        <div class="field"><span class="label">Stop loss</span><input type="number" id="f-sl" step="0.00001" placeholder="1.0820"></div>
+        <div class="field"><span class="label">Take profit</span><input type="number" id="f-tp" step="0.00001" placeholder="1.0922"></div>
+        <div class="field"><span class="label">Result</span><select id="f-result"><option>WIN</option><option>LOSS</option><option>OPEN</option><option>SKIP</option></select></div>
+      </div>
+      <div class="field"><span class="label">Notes</span><input type="text" id="f-notes" placeholder="EMA cross, RSI 52, clean entry"></div>
+      <div class="flex gap8">
+        <button class="btn btn-a" onclick="addTrade()">+ Log trade</button>
+        <span id="rr-prev" style="font-size:12px;font-family:var(--fm);color:var(--color-text-secondary)"></span>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:1rem">
+      <span class="label" style="margin-bottom:8px">Equity (R units)</span>
+      <div class="sparkwrap" id="spark"></div>
+    </div>
+    <div class="card" style="overflow-x:auto">
+      <div id="trade-tbl"></div>
+    </div>
+    <div style="margin-top:10px;text-align:right">
+      <button class="btn btn-sm" onclick="exportCSV()">↓ Export CSV</button>
+    </div>
+  </div>
+
+  <!-- AGENTS -->
+  <div id="tab-agents" class="tab">
+    <div class="card" style="margin-bottom:1rem">
+      <div class="flex between gap8">
+        <div>
+          <span class="label" style="margin-bottom:6px">Paper trade agents · human-in-the-loop</span>
+          <div class="flex gap8">
+            <span class="badge bg2">📄 PAPER ONLY</span>
+            <span class="badge bs mono" id="sig-total">0 signals generated</span>
+          </div>
+        </div>
+        <button class="btn btn-a" onclick="genSignals()" id="gen-btn">⚡ Generate signals</button>
+      </div>
+    </div>
+    <div style="background:var(--color-background-warning);border:0.5px solid var(--color-border-warning);border-radius:var(--border-radius-md);padding:10px 14px;margin-bottom:1rem;font-size:12px;color:var(--color-text-warning)">
+      Every signal requires your approval. Real money trades will require a separate confirmation step. You decide — agents only propose.
+    </div>
+    <div class="flex between" style="margin-bottom:10px">
+      <span style="font-size:11px;color:var(--color-text-secondary);font-family:var(--fm);text-transform:uppercase;letter-spacing:.06em">Pending approval</span>
+      <span style="font-size:11px;color:var(--color-text-secondary);font-family:var(--fm)" id="pend-ct">0 waiting</span>
+    </div>
+    <div id="pend-q"><div class="empty">Click "Generate signals" to have Claude propose paper trades. You approve or reject each one.</div></div>
+    <div class="divider"></div>
+    <div style="font-size:11px;color:var(--color-text-secondary);font-family:var(--fm);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Executed paper trades</div>
+    <div id="exec-list"><div class="empty" style="padding:16px">Approved trades appear here and log to your journal.</div></div>
+  </div>
+
+  <!-- SENTIMENT -->
+  <div id="tab-sentiment" class="tab">
+    <div class="g2 gap12" style="margin-bottom:1rem">
+      <div class="card">
+        <span class="label" style="margin-bottom:10px">Analyze market sentiment</span>
+        <div class="field"><span class="label">Asset / pair / keyword</span><input type="text" id="s-asset" placeholder="EUR/USD, Bitcoin, DXY..."></div>
+        <div class="field"><span class="label">Paste headlines or describe context</span><textarea id="s-ctx" rows="5" placeholder="Paste news headlines, or describe what you see in the market..."></textarea></div>
+        <button class="btn btn-a" style="width:100%" onclick="doSent()" id="s-btn">🔥 Analyze</button>
+      </div>
+      <div class="card" style="text-align:center">
+        <span class="label" style="margin-bottom:8px">Heat score</span>
+        <div style="font-size:52px;font-weight:500;font-family:var(--fm);line-height:1;transition:color .4s" id="heat-num" class="muted">—</div>
+        <div style="font-size:11px;font-family:var(--fm);letter-spacing:.08em;text-transform:uppercase;margin-top:4px;transition:color .4s" id="heat-lbl" class="muted">awaiting analysis</div>
+        <div class="heat-track"><div class="heat-needle" id="hneedle" style="left:50%"></div></div>
+        <div class="flex between" style="font-size:10px;color:var(--color-text-secondary);font-family:var(--fm)"><span>fear</span><span>neutral</span><span>greed</span></div>
+      </div>
+    </div>
+    <div class="g2 gap12">
+      <div class="card">
+        <span class="label" style="margin-bottom:8px">Key drivers</span>
+        <div id="drivers"><div class="muted" style="font-size:12px">Run an analysis to see bullish and bearish drivers.</div></div>
+      </div>
+      <div class="card">
+        <span class="label" style="margin-bottom:8px">History</span>
+        <div id="sent-hist"><div class="muted" style="font-size:12px">Previous scans appear here.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LAB -->
+  <div id="tab-lab" class="tab">
+    <div class="card" style="margin-bottom:1rem">
+      <span class="label" style="margin-bottom:10px">Algorithm library</span>
+      <div class="algo-btns" id="algo-btns">
+        <button class="abtn on" onclick="showAlgo('ema',this)">EMA cross</button>
+        <button class="abtn" onclick="showAlgo('rsi',this)">RSI filter</button>
+        <button class="abtn" onclick="showAlgo('ml',this)">ML signal</button>
+        <button class="abtn" onclick="showAlgo('bb',this)">Bollinger R</button>
+        <button class="abtn" onclick="showAlgo('walk',this)">Walk-forward</button>
+      </div>
+      <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:8px;line-height:1.6" id="algo-desc"></div>
+      <div class="codebox" id="algo-code"></div>
+    </div>
+    <div class="card" style="margin-bottom:1rem">
+      <span class="label" style="margin-bottom:10px">Integrations roadmap</span>
+      <div style="font-size:12px;line-height:1.9;color:var(--color-text-secondary)">
+        <strong style="color:var(--color-text-primary)">Week 1 — Python env:</strong> <span class="mono" style="color:#27500A">pip install pandas yfinance pandas-ta scikit-learn streamlit</span><br>
+        <strong style="color:var(--color-text-primary)">Week 2 — TradingView Pro ($15/mo):</strong> Create EMA/RSI alert → Webhook URL → N8N endpoint<br>
+        <strong style="color:var(--color-text-primary)">Week 3 — N8N on Railway (free):</strong> Cron → Claude API → Telegram approval → journal log<br>
+        <strong style="color:var(--color-text-primary)">Week 4 — R stats:</strong> <span class="mono" style="color:#27500A">install.packages(c("quantmod","TTR","PerformanceAnalytics"))</span><br>
+        <strong style="color:var(--color-text-primary)">Month 2 — Backtester:</strong> Walk-forward test on your own trade log CSV (see algo above)<br>
+        <strong style="color:var(--color-text-primary)">Month 4 — ML filter:</strong> Logistic regression on 50+ closed trades, AUC > 0.6 before using
+      </div>
+    </div>
+    <button class="btn" onclick="sendPrompt('I want to set up N8N on Railway to connect my TradingView alerts to a Telegram approval bot — walk me through it step by step ↗')">Set up N8N automation ↗</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const LOC={
+  latam:{name:'LATAM (Medellin)',items:[['Rent (1BR)',600],['Food & dining',300],['Transport',70],['Internet + cowork',90],['Health (SafetyWing)',65],['Phone',20],['Entertainment',120],['Buffer',100]]},
+  bcn:{name:'Barcelona, Spain',items:[['Rent (1BR Gràcia)',1350],['Food & dining',500],['Transport',100],['Internet',40],['Health (private)',160],['Phone',20],['Entertainment',220],['Buffer',140]]},
+  usa:{name:'USA (Austin TX)',items:[['Rent (1BR)',1700],['Food & dining',600],['Transport',580],['Internet',70],['Health insurance',420],['Phone',70],['Entertainment',250],['Buffer',180]]}
+};
+const OH=[['Spread/commission (20 trades)',250],['Swap fees',80],['TradingView Pro',17],['VPS',20]];
+
+const ALGOS={
+  ema:{d:'Core entry filter. EMA 20 crosses above EMA 50 = trend up. Only take LONG setups in that state. Add RSI > 50 confirmation before entering.',c:`import pandas as pd
+import yfinance as yf
+
+def ema_signals(ticker='EURUSD=X', fast=20, slow=50):
+    df = yf.download(ticker, period='6mo', interval='1h')
+    df['EMA_f'] = df['Close'].ewm(span=fast, adjust=False).mean()
+    df['EMA_s'] = df['Close'].ewm(span=slow, adjust=False).mean()
+    df['cross'] = (df['EMA_f'] > df['EMA_s']).astype(int).diff()
+    entries = df[df['cross'] != 0].copy()
+    entries['signal'] = entries['cross'].map({1:'LONG', -1:'SHORT'})
+    return entries[['Close','EMA_f','EMA_s','signal']]`},
+  rsi:{d:'Momentum filter. Do NOT enter a LONG even with EMA trend up if RSI < 50. Wait for RSI to cross 50 upward — that crossing is the confirmation, not just being above 50.',c:`import pandas_ta as ta
+
+def add_rsi_filter(df, period=14):
+    df['RSI'] = ta.rsi(df['Close'], length=period)
+    # RSI crossing 50 from below
+    df['rsi_up'] = (df['RSI'] > 50) & (df['RSI'].shift(1) <= 50)
+    # Valid long: EMA aligned + RSI just crossed 50
+    df['valid_long'] = (df['EMA_f'] > df['EMA_s']) & df['rsi_up']
+    return df
+
+# pip install pandas-ta`},
+  ml:{d:'Logistic regression on your own trade log. Once you have 50+ closed trades, train this model to learn which conditions predict wins. AUC > 0.6 before trusting it.',c:`import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import StandardScaler
+
+df = pd.read_csv('trades.csv')
+df['won'] = (df['Result'] == 'WIN').astype(int)
+df['rr_val'] = df['RR'].str.replace(':1','').astype(float)
+df['is_long'] = (df['Direction'] == 'LONG').astype(int)
+
+# Add more features as you collect data:
+# hour_of_day, day_of_week, ema_spread, rsi_value
+features = ['rr_val', 'is_long']
+X = df[features].dropna()
+y = df.loc[X.index, 'won']
+
+X_s = StandardScaler().fit_transform(X)
+model = LogisticRegression()
+auc = cross_val_score(model, X_s, y, cv=5, scoring='roc_auc')
+print(f"AUC: {auc.mean():.3f} ± {auc.std():.3f}")`},
+  bb:{d:'Bollinger Band squeeze breakout in R. The squeeze (bands narrowing) signals volatility compression before an expansion. Enter when price breaks the band after a squeeze.',c:`library(quantmod); library(TTR)
+
+getSymbols("EURUSD=X", src="yahoo")
+price <- Cl(EURUSD.X)
+
+bb <- BBands(price, n=20, sd=2)
+bw <- bb[,"up"] - bb[,"dn"]
+
+# Squeeze: bandwidth below its 20-period average
+squeeze <- bw < rollapply(bw, 20, mean, na.rm=TRUE)
+
+# Breakout LONG after squeeze
+breakout_long <- lag(squeeze,1) & price > bb[,"up"]
+
+tail(merge(price, bb, squeeze, breakout_long), 10)`},
+  walk:{d:'Walk-forward testing prevents lookahead bias — the #1 mistake beginners make. Train on 3 months, test on 1, slide forward. Never optimize and test on the same data.',c:`import pandas as pd
+import yfinance as yf
+
+def walk_forward(ticker, strategy_fn, train_mo=3, test_mo=1):
+    df = yf.download(ticker, period='2y', interval='1h')
+    results, start = [], 0
+    train_bars = train_mo * 22 * 8   # ~8 bars/day
+    test_bars  = test_mo  * 22 * 8
+
+    while start + train_bars + test_bars < len(df):
+        train = df.iloc[start : start + train_bars]
+        test  = df.iloc[start+train_bars : start+train_bars+test_bars]
+        best  = strategy_fn.optimize(train)    # optimize on train
+        perf  = strategy_fn.evaluate(test, best) # OOS test
+        results.append(perf)
+        start += test_bars  # slide forward
+    return pd.DataFrame(results)
+
+# Key OOS metrics: win_rate, avg_rr, expectancy, max_drawdown`}
+};
+
+let T=[],EP=[],SH=[],PC=[],ns=0,curLoc='latam',eqChart=null;
+
+async function sv(k,v){try{await window.storage.set(k,JSON.stringify(v))}catch(e){}}
+async function ld(k,d){try{const r=await window.storage.get(k);return JSON.parse(r.value)}catch(e){return d}}
+
+function sp(tab,btn){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tab-'+tab).classList.add('on');
+  if(btn)btn.classList.add('on');
+  if(tab==='journal'){renderJournal();renderSpark();}
+  if(tab==='agents')renderAgents();
+  if(tab==='lab')showAlgo('ema',document.querySelector('.abtn'));
+}
+
+function setLoc(l){
+  curLoc=l;
+  ['latam','bcn','usa'].forEach(x=>document.getElementById('lt-'+x).classList.toggle('on',x===l));
+  calcMoney();
+}
+
+function calcMoney(){
+  const inc=parseInt(document.getElementById('sl-inc').value);
+  const ret=parseFloat(document.getElementById('sl-ret').value);
+  const inj=parseInt(document.getElementById('sl-inj').value);
+  document.getElementById('sv-inc').textContent='$'+inc.toLocaleString();
+  document.getElementById('sv-ret').textContent=ret+'%';
+  document.getElementById('sv-inj').textContent='$'+inj.toLocaleString();
+
+  const loc=LOC[curLoc];
+  const living=loc.items.reduce((a,b)=>a+b[1],0);
+  const oh=OH.reduce((a,b)=>a+b[1],0);
+  const afterTax=living+oh;
+  const gross=Math.round(afterTax/0.75);
+  const acct=Math.round(gross/(ret/100));
+
+  document.getElementById('loc-name').textContent=loc.name;
+  document.getElementById('m-acct').textContent='$'+acct.toLocaleString();
+  document.getElementById('m-acct-note').textContent=`at ${ret}% / mo · 25% tax reserve`;
+  document.getElementById('m-gross').textContent='$'+gross.toLocaleString();
+
+  let html='';
+  loc.items.forEach(([n,v])=>html+=`<div class="crow"><span class="muted">${n}</span><span class="cv">$${v}</span></div>`);
+  html+=`<div class="crow" style="border-top:0.5px solid var(--color-border-secondary);margin-top:4px;padding-top:10px"><span style="color:var(--color-text-secondary)">Trading overhead</span><span class="cv" style="color:#BA7517">$${oh}</span></div>`;
+  html+=`<div class="crow"><span style="font-weight:500">Gross needed/month</span><span class="cv" style="color:#639922">$${gross.toLocaleString()}</span></div>`;
+  document.getElementById('cost-list').innerHTML=html;
+
+  function monthsTo(target){let b=5000,m=0;while(b<target&&m<300){b=b*(1+(ret/100))+inj;m++;}return m<300?m:null;}
+  const latamAcct=Math.round(LOC.latam.items.reduce((a,b)=>a+b[1],0)+oh)/0.75/(ret/100);
+  const m1=monthsTo(latamAcct);
+  const m2=monthsTo(acct);
+  const m3=monthsTo(acct*4.3);
+  document.getElementById('m-time').textContent=m1?`~${Math.ceil(m1/12)}yr`:'10yr+';
+
+  document.getElementById('milestones').innerHTML=`
+    📄 Month 1–6: Paper trading — no account size needed, zero pressure<br>
+    💵 Month 7–9: Live micro account ($200–500) — 0.5% risk per trade<br>
+    🌎 LATAM funded: $${Math.round(latamAcct).toLocaleString()} needed → ${m1?`~${Math.ceil(m1/12)} years at ${ret}% + $${inj}/mo injection`:'10yr+ at these params'}<br>
+    🇪🇸 ${curLoc==='bcn'?'BCN':curLoc==='usa'?'USA':'Target'} funded: $${acct.toLocaleString()} needed → ${m2?`~${Math.ceil(m2/12)} years`:'10yr+'}<br>
+    💰 $5K pocket + $5K reinvest: needs $${Math.round(acct*4.3).toLocaleString()} → ${m3?`~${Math.ceil(m3/12)} years`:'15yr+'}
+  `;
+  const recs=[];
+  if(ret>5)recs.push('⚠️ 5%+/month is real but rare to sustain. Model your base case at 3%, your upside at 5%.');
+  if(inj<300)recs.push('💡 Every $300/mo injection compresses the timeline significantly. One freelance client changes everything.');
+  recs.push('🎯 LATAM base dramatically cuts your required account vs USA. It\'s not just cheaper — it changes the math by 40–60%.');
+  recs.push('🧮 Your edge is not just returns — it\'s the LATAM cost arbitrage. Deploy from Medellin, earn in dollars.');
+  document.getElementById('rec-box').innerHTML=recs.join('<br>');
+}
+
+function addTrade(ov={}){
+  const pair=(ov.pair||document.getElementById('f-pair').value.trim().toUpperCase())||'—';
+  const date=ov.date||document.getElementById('f-date').value;
+  const dir=ov.dir||document.getElementById('f-dir').value;
+  const e=parseFloat(ov.entry||document.getElementById('f-entry').value)||null;
+  const sl=parseFloat(ov.sl||document.getElementById('f-sl').value)||null;
+  const tp=parseFloat(ov.tp||document.getElementById('f-tp').value)||null;
+  const result=ov.result||document.getElementById('f-result').value;
+  const notes=ov.notes||document.getElementById('f-notes').value.trim();
+  const rr=(e&&sl&&tp)?((Math.abs(tp-e)/Math.abs(e-sl)).toFixed(2)):null;
+
+  T.unshift({id:Date.now(),date,pair,dir,entry:e,sl,tp,result,notes,rr,agent:ov.agent||false});
+  sv('tos_t',T);
+  renderJournal();renderSpark();
+  ['f-pair','f-entry','f-sl','f-tp','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('rr-prev').textContent='';
+}
+
+function delTrade(id){T=T.filter(t=>t.id!==id);sv('tos_t',T);renderJournal();renderSpark();}
+
+function prevRR(){
+  const e=parseFloat(document.getElementById('f-entry').value);
+  const sl=parseFloat(document.getElementById('f-sl').value);
+  const tp=parseFloat(document.getElementById('f-tp').value);
+  const el=document.getElementById('rr-prev');
+  if(!e||!sl||!tp||isNaN(e)||isNaN(sl)||isNaN(tp)){el.textContent='';return;}
+  const rr=(Math.abs(tp-e)/Math.abs(e-sl)).toFixed(2);
+  const ok=parseFloat(rr)>=2;
+  el.style.color=ok?'#27500A':'#791F1F';
+  el.textContent=`R:R ${rr}:1 ${ok?'✓':'✗ below 2:1'}`;
+}
+
+function renderJournal(){
+  const closed=T.filter(t=>t.result==='WIN'||t.result==='LOSS');
+  const wins=T.filter(t=>t.result==='WIN');
+  const rrs=T.filter(t=>t.rr).map(t=>parseFloat(t.rr));
+  const wr=closed.length?Math.round(wins.length/closed.length*100):null;
+  const avgRR=rrs.length?(rrs.reduce((a,b)=>a+b,0)/rrs.length).toFixed(2):null;
+  document.getElementById('k-tot').textContent=T.length;
+  const wrEl=document.getElementById('k-wr');
+  if(wr!==null){wrEl.textContent=wr+'%';wrEl.style.color=wr>=45?'#27500A':'#791F1F';}else{wrEl.textContent='—';wrEl.style.color='';}
+  const rrEl=document.getElementById('k-rr');
+  if(avgRR){rrEl.textContent=avgRR+':1';rrEl.style.color=parseFloat(avgRR)>=2?'#27500A':'#BA7517';}else{rrEl.textContent='—';rrEl.style.color='';}
+  const expEl=document.getElementById('k-exp');
+  if(closed.length>=5){
+    const w=wins.length/closed.length,wr2=wins.filter(t=>t.rr).length?wins.filter(t=>t.rr).reduce((a,t)=>a+parseFloat(t.rr),0)/wins.filter(t=>t.rr).length:1;
+    const ex=((w*wr2)-((1-w)*1)).toFixed(2);
+    expEl.textContent=ex+'R';expEl.style.color=parseFloat(ex)>0?'#27500A':'#791F1F';
+  }else{expEl.textContent='<5 trades';expEl.style.color='';}
+
+  const tbl=document.getElementById('trade-tbl');
+  if(!T.length){tbl.innerHTML='<div class="empty">No trades yet. Log your first paper trade above.</div>';return;}
+  tbl.innerHTML=`<table><thead><tr><th>Date</th><th>Pair</th><th>Dir</th><th>Entry</th><th>SL</th><th>TP</th><th>R:R</th><th>Result</th><th>Notes</th><th></th></tr></thead><tbody>${T.map(t=>`<tr>
+    <td class="mono muted">${t.date}</td>
+    <td style="font-weight:500">${t.pair}${t.agent?' <span style="font-size:9px;color:#7F77DD">🤖</span>':''}</td>
+    <td><span class="badge ${t.dir==='LONG'?'bg2':'br2'}">${t.dir}</span></td>
+    <td class="mono" style="font-size:11px">${t.entry||'—'}</td>
+    <td class="mono muted" style="font-size:11px">${t.sl||'—'}</td>
+    <td class="mono muted" style="font-size:11px">${t.tp||'—'}</td>
+    <td class="mono ${t.rr&&parseFloat(t.rr)>=2?'':'muted'}" style="font-size:11px;${t.rr&&parseFloat(t.rr)>=2?'color:#27500A':''}">${t.rr?t.rr+':1':'—'}</td>
+    <td><span class="badge b${t.result[0].toLowerCase()}">${t.result}</span></td>
+    <td class="muted" style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.notes||''}</td>
+    <td><button class="btn btn-sm btn-r" style="padding:2px 6px;font-size:10px" onclick="delTrade(${t.id})">✕</button></td>
+  </tr>`).join('')}</tbody></table>`;
+}
+
+function renderSpark(){
+  const closed=[...T].reverse().filter(t=>t.result==='WIN'||t.result==='LOSS').slice(-30);
+  const el=document.getElementById('spark');
+  if(!closed.length){el.innerHTML='<div class="muted" style="font-size:11px;align-self:center">No closed trades yet</div>';return;}
+  const mx=Math.max(...closed.map(t=>parseFloat(t.rr)||1),1);
+  el.innerHTML=closed.map(t=>{
+    const h=Math.max(Math.round(((parseFloat(t.rr)||1)/mx)*46),3);
+    const c=t.result==='WIN'?'#639922':'#E24B4A';
+    return`<div class="spbar" style="height:${h}px;background:${c}" title="${t.pair} ${t.result} ${t.rr?'R:R '+t.rr:''}"></div>`;
+  }).join('');
+}
+
+function exportCSV(){
+  if(!T.length){alert('No trades to export.');return;}
+  const h='Date,Pair,Direction,Entry,SL,TP,RR,Result,Notes\n';
+  const r=T.map(t=>[t.date,t.pair,t.dir,t.entry||'',t.sl||'',t.tp||'',t.rr||'',t.result,t.notes||''].join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(h+r);a.download='trades_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+async function genSignals(){
+  const btn=document.getElementById('gen-btn');
+  btn.innerHTML='<span class="spin"></span> Analyzing...';btn.disabled=true;
+  const prompt=`Generate exactly 2 paper trade signals for forex/crypto. Use realistic prices (EURUSD ~1.08-1.10, GBPUSD ~1.26-1.28, BTCUSD ~60000-70000). R:R must be >= 2.0. Confidence 50-82%. Return ONLY valid JSON array:\n[{"pair":"EURUSD","direction":"LONG","entry":1.0854,"sl":1.0820,"tp":1.0922,"rr":2.0,"confidence":68,"tf":"H4","reasoning":"Two sentences on EMA/RSI/support basis for this setup."}]`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    let txt=data.content[0].text.trim().replace(/```json|```/g,'').trim();
+    const sigs=JSON.parse(txt);
+    sigs.forEach(s=>{s.id=Date.now()+Math.random();s.ts=new Date().toLocaleTimeString();});
+    PC=[...PC,...sigs];ns+=sigs.length;sv('tos_ns',ns);
+    renderAgents();
+  }catch(e){alert('Signal generation error: '+e.message+'.\n\nNote: This only works inside Claude.ai.');}
+  btn.innerHTML='⚡ Generate signals';btn.disabled=false;
+}
+
+function renderAgents(){
+  document.getElementById('sig-total').textContent=ns+' signals generated';
+  document.getElementById('pend-ct').textContent=PC.length+' waiting';
+  const nav=document.getElementById('nav-agents');
+  nav.textContent=PC.length?`🤖 Agents (${PC.length})`:'🤖 Agents';
+
+  const pq=document.getElementById('pend-q');
+  if(!PC.length){pq.innerHTML='<div class="empty">Click "Generate signals" to have Claude propose paper trades. You approve or reject each one.</div>';}
+  else pq.innerHTML=PC.map(s=>`<div class="agcard ${s.direction.toLowerCase()}">
+    <div class="flex between gap8" style="margin-bottom:10px">
+      <div class="flex gap8"><span style="font-weight:500;font-size:14px;font-family:var(--fm)">${s.pair}</span><span class="badge ${s.direction==='LONG'?'bg2':'br2'}">${s.direction}</span><span class="badge bs">${s.tf||'H4'}</span></div>
+      <span class="badge by">${s.confidence}% conf</span>
+    </div>
+    <div class="g4 gap8" style="margin-bottom:10px">
+      <div><div style="font-size:10px;color:var(--color-text-secondary);font-family:var(--fm)">ENTRY</div><div style="font-family:var(--fm);font-size:12px;margin-top:2px">${s.entry}</div></div>
+      <div><div style="font-size:10px;color:var(--color-text-secondary);font-family:var(--fm)">STOP</div><div style="font-family:var(--fm);font-size:12px;margin-top:2px;color:#791F1F">${s.sl}</div></div>
+      <div><div style="font-size:10px;color:var(--color-text-secondary);font-family:var(--fm)">TARGET</div><div style="font-family:var(--fm);font-size:12px;margin-top:2px;color:#27500A">${s.tp}</div></div>
+      <div><div style="font-size:10px;color:var(--color-text-secondary);font-family:var(--fm)">R:R</div><div style="font-family:var(--fm);font-size:12px;margin-top:2px;${parseFloat(s.rr)>=2?'color:#27500A':''}">${parseFloat(s.rr).toFixed(1)}:1</div></div>
+    </div>
+    <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:8px 10px;font-size:11px;color:var(--color-text-secondary);margin-bottom:10px;line-height:1.6">${s.reasoning}</div>
+    <div class="flex gap8">
+      <button class="btn btn-g btn-sm" onclick="approveS('${s.id}')">✓ Approve</button>
+      <button class="btn btn-r btn-sm" onclick="rejectS('${s.id}')">✕ Reject</button>
+    </div>
+  </div>`).join('');
+
+  const el=document.getElementById('exec-list');
+  if(!EP.length){el.innerHTML='<div class="empty" style="padding:16px">Approved trades appear here and log to your journal.</div>';return;}
+  el.innerHTML=`<table><thead><tr><th>Time</th><th>Pair</th><th>Dir</th><th>Entry</th><th>R:R</th><th>Conf</th></tr></thead><tbody>${EP.map(s=>`<tr><td class="mono muted" style="font-size:11px">${s.ts}</td><td style="font-weight:500">${s.pair}</td><td><span class="badge ${s.direction==='LONG'?'bg2':'br2'}">${s.direction}</span></td><td class="mono" style="font-size:11px">${s.entry}</td><td class="mono" style="font-size:11px;color:#27500A">${parseFloat(s.rr).toFixed(1)}:1</td><td class="mono" style="font-size:11px;color:#BA7517">${s.confidence}%</td></tr>`).join('')}</tbody></table>`;
+}
+
+function approveS(id){
+  const s=PC.find(x=>x.id==id);if(!s)return;
+  EP.unshift(s);sv('tos_ep',EP);PC=PC.filter(x=>x.id!=id);
+  addTrade({pair:s.pair,dir:s.direction,entry:s.entry,sl:s.sl,tp:s.tp,result:'OPEN',notes:`Agent ${s.tf} ${s.confidence}% conf`,agent:true});
+  renderAgents();
+}
+function rejectS(id){PC=PC.filter(x=>x.id!=id);renderAgents();}
+
+async function doSent(){
+  const asset=document.getElementById('s-asset').value.trim();
+  const ctx=document.getElementById('s-ctx').value.trim();
+  if(!asset){alert('Enter an asset or pair first.');return;}
+  const btn=document.getElementById('s-btn');
+  btn.innerHTML='<span class="spin"></span> Analyzing...';btn.disabled=true;
+
+  const prompt=`Analyze market sentiment for: ${asset}${ctx?'\n\nContext:\n'+ctx:''}\nReturn ONLY valid JSON:\n{"score":73,"label":"bullish","summary":"One concise sentence.","bullish":["driver1","driver2","driver3"],"bearish":["driver1","driver2"],"rec":"Short trader recommendation."}`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const r=JSON.parse(data.content[0].text.trim().replace(/```json|```/g,'').trim());
+    const c=r.score<35?'#E24B4A':r.score<65?'#BA7517':'#639922';
+    document.getElementById('heat-num').textContent=r.score;document.getElementById('heat-num').style.color=c;
+    document.getElementById('heat-lbl').textContent=r.label.toUpperCase()+' — '+asset;document.getElementById('heat-lbl').style.color=c;
+    document.getElementById('hneedle').style.left=r.score+'%';
+
+    let d='';
+    if(r.bullish)r.bullish.forEach(x=>{d+=`<div class="driver"><span style="color:#27500A">▲</span><span class="muted">${x}</span></div>`;});
+    if(r.bearish)r.bearish.forEach(x=>{d+=`<div class="driver"><span style="color:#E24B4A">▼</span><span class="muted">${x}</span></div>`;});
+    if(r.rec)d+=`<div style="margin-top:10px;padding:8px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:11px;color:var(--color-text-primary)">→ ${r.rec}</div>`;
+    document.getElementById('drivers').innerHTML=d;
+
+    SH.unshift({asset,score:r.score,label:r.label,ts:new Date().toLocaleTimeString(),sum:r.summary});
+    if(SH.length>8)SH=SH.slice(0,8);sv('tos_sh',SH);renderSentHist();
+  }catch(e){alert('Sentiment error: '+e.message);}
+  btn.innerHTML='🔥 Analyze';btn.disabled=false;
+}
+
+function renderSentHist(){
+  const el=document.getElementById('sent-hist');
+  if(!SH.length){el.innerHTML='<div class="muted" style="font-size:12px">Previous scans appear here.</div>';return;}
+  el.innerHTML=SH.map(h=>{
+    const c=h.score<35?'#E24B4A':h.score<65?'#BA7517':'#639922';
+    return`<div style="display:flex;gap:10px;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--color-border-tertiary)">
+      <span style="font-family:var(--fm);font-size:16px;font-weight:600;color:${c};min-width:30px">${h.score}</span>
+      <div><div style="font-size:12px;font-weight:500">${h.asset}</div><div style="font-size:10px;color:var(--color-text-secondary)">${h.ts}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function showAlgo(k,btn){
+  document.querySelectorAll('.abtn').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  const a=ALGOS[k];if(!a)return;
+  document.getElementById('algo-desc').textContent=a.d;
+  document.getElementById('algo-code').textContent=a.c;
+}
+
+document.getElementById('f-entry').addEventListener('input',prevRR);
+document.getElementById('f-sl').addEventListener('input',prevRR);
+document.getElementById('f-tp').addEventListener('input',prevRR);
+
+(async()=>{
+  T=await ld('tos_t',[]);
+  EP=await ld('tos_ep',[]);
+  SH=await ld('tos_sh',[]);
+  ns=await ld('tos_ns',0);
+  document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  calcMoney();renderJournal();renderSpark();renderAgents();renderSentHist();
+  showAlgo('ema',document.querySelector('.abtn'));
+})();
+</script>
